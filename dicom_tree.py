@@ -204,7 +204,8 @@ class DicomTree:
             #value="/".join(list(value))
             value = list(value)
         elif isinstance(value, pydicom.Sequence):
-            a=1
+            print("sequence value")
+            print(value)
 
         return(value)
 
