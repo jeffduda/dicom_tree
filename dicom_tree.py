@@ -207,6 +207,9 @@ class DicomTree:
             print("sequence value")
             print(value)
 
+        if tag=="00081032":
+            print("Found CPT Code")
+
         return(value)
 
 def main():
