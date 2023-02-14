@@ -7,13 +7,18 @@
         {"Group": "0008", "Element": "1030", "Name": "StudyDescription"}
     ],
     "Series": [
+        {"Group": "0008", "Element": "0015", "Name": "BodyPartExamined"},
         {"Group": "0008", "Element": "0050", "Name": "AccessionNumber"},
         {"Group": "0008", "Element": "0020", "Name": "StudyDate"},
-        {"Group": "0008", "Element": "0030", "Name": "StudyTime"},
-        {"Group": "0008", "Element": "1030", "Name": "StudyDescription"},
-        {"Group": "0008", "Element": "0060", "Name": "Modality"},
         {"Group": "0008", "Element": "0021", "Name": "SeriesDate"},
+        {"Group": "0008", "Element": "0030", "Name": "StudyTime"},
         {"Group": "0008", "Element": "0031", "Name": "SeriesTime"},
+        {"Group": "0008", "Element": "0060", "Name": "Modality"},
+        {"Group": "0008", "Element": "0070", "Name": "Manufacturer"},
+        {"Group": "0008", "Element": "1000", "Name": "DeviceSerialNumber"},
+        {"Group": "0008", "Element": "1010", "Name": "StationName"},
+        {"Group": "0008", "Element": "1030", "Name": "StudyDescription"},
+        {"Group": "0008", "Element": "1033", "Name": "ProcedureCodeSequence"},
         {"Group": "0008", "Element": "103E", "Name": "SeriesDescription"},
         {"Group": "0020", "Element": "0011", "Name": "SeriesNumber"}
     ],
@@ -22,6 +27,7 @@
         {"Group": "0018", "Element": "0050", "Name": "SliceThickness"},
         {"Group": "0008", "Element": "0008", "Name": "ImageType"},
         {"Group": "0028", "Element": "0010", "Name": "Rows"},
-        {"Group": "0028", "Element": "0011", "Name": "Columns"}
+        {"Group": "0028", "Element": "0011", "Name": "Columns"},
+        {"Group": "0028", "Element": "0101", "Name": "BitsStored"}
     ]
 }
