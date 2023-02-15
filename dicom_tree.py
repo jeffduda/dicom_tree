@@ -95,6 +95,9 @@ class DicomTree:
         for tag in self._instance_dict.keys():
             if tag in js:
                 instance[tag] = js[tag]
+            else:
+                logging.debug("Missing tag: "+str(tag))
+        
         return instance
 
     def create_series(self, js):
@@ -104,6 +107,8 @@ class DicomTree:
         for tag in self._series_dict.keys():
             if tag in js:
                 series[tag] = js[tag]
+            else:
+                logging.debug("Missing tag: "+str(tag))
 
         return series
 
@@ -207,14 +212,11 @@ class DicomTree:
             print("sequence value")
             print(value)
 
-        if tag=="00081032":
-            print("Found CPT Code")
-
         return(value)
 
 def main():
 
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     my_parser = argparse.ArgumentParser(description='Display DICOM Header Info')
     my_parser.add_argument('-p', '--path', type=str, help='the path to the directory', required=True)
