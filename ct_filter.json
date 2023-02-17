@@ -1,0 +1,33 @@
+
+{
+    "Series": [
+        {
+            "Group": "0008", 
+            "Element": "0060", 
+            "Type": "str", 
+            "Name": "Modality",
+            "Operator": "eq", 
+            "Value": "CT"
+        }
+    ],
+    "Instance": [
+        {
+            "Group": "0008", 
+            "Element": "0008", 
+            "Name": "ImageType",
+            "Type": "str",
+            "Index": 0,
+            "Operator": "eq",
+            "Value": "ORIGINAL"
+        },
+        {
+            "Group": "0008", 
+            "Element": "0008", 
+            "Name": "ImageType",
+            "Type": "str",
+            "Index": 1,
+            "Operator": "eq",
+            "Value": "AXIAL"
+        } 
+    ]
+}

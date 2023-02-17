@@ -95,21 +95,26 @@ class DicomTree:
         for tag in self._instance_dict.keys():
             if tag in js:
                 instance[tag] = js[tag]
+            else:
+                logging.debug("Missing tag: "+str(tag))
+        
         return instance
 
-    def create_series(self, js):
-        instance = self.create_instance(js)
+    def create_series(self, js, filename):
+        instance = self.create_instance(js, filename=filename)
         series = {self._series_code: js[self._series_code], "InstanceList": [instance]} #SeriesInstanceUID is a required tag
 
         for tag in self._series_dict.keys():
             if tag in js:
                 series[tag] = js[tag]
+            else:
+                logging.debug("Missing tag: "+str(tag))
 
         return series
 
-    def create_study(self, js):
+    def create_study(self, js, filename):
  
-        series = self.create_series(js)
+        series = self.create_series(js, filename)
         study = {self._study_code: js[self._study_code], "SeriesList": [series]} #StudyInstanceUID is a required tag
 
         for tag in self._study_dict.keys():
@@ -141,11 +146,10 @@ class DicomTree:
         series=None
         js = ds.to_json_dict()
         instance=self.create_instance(js, filename=filename)
-        #instance['Filename'] = filename
 
         if not self.study_exists(js[self._study_code]['Value'][0]):    
             logging.info("Adding new study: %s" % js[self._study_code]['Value'][0])
-            study = self.create_study(js)
+            study = self.create_study(js, filename)
             logging.info("Adding new series: %s" % study['SeriesList'][0][self._series_code]['Value'][0])
             self.studies.append(study)
 
@@ -154,7 +158,7 @@ class DicomTree:
 
         if not self.is_series_in_study(study, js[self._series_code]['Value'][0]):
             logging.info("Adding new series: %s" % js[self._series_code]['Value'][0])
-            series = self.create_series(js)
+            series = self.create_series(js, filename)
             study['SeriesList'].append(series)
         else:
             series = [x for x in study['SeriesList'] if x[self._series_code]==js[self._series_code]][0]
@@ -207,14 +211,11 @@ class DicomTree:
             print("sequence value")
             print(value)
 
-        if tag=="00081032":
-            print("Found CPT Code")
-
         return(value)
 
 def main():
 
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     my_parser = argparse.ArgumentParser(description='Display DICOM Header Info')
     my_parser.add_argument('-p', '--path', type=str, help='the path to the directory', required=True)
