@@ -12,6 +12,11 @@ python dicom_tree.py -p /path/to/dicom/directory -r 3 -o output_tree.json -t ct_
 ```
 
 ## Example json file that defines what tags to extract
+dicom_tree.py will use the following to identify studies, series, and instances
+* study - StudyInstanceUID (0020,000D)
+* series - SeriesInstanceUID (0020,000E)
+* instance - SOPInstanceUID (0008,0018)
+A json file of additional field may be used to extract additional information if it is available. The "Name" value is optional, only "Group" and "Element" are required.
 ```
 {
     "Study": [
