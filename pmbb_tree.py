@@ -14,19 +14,27 @@ import pandas as pd
 
 def main():
 
-    logging.basicConfig(level=logging.INFO)
-
     my_parser = argparse.ArgumentParser(description='Check dicom tag names')
     my_parser.add_argument('-i', '--input', type=str, help='input tree', required=True)
     my_parser.add_argument('-k', '--key', type=str, help='id key file', required=True)
     my_parser.add_argument('-o', '--output', type=str, help='output tree', required=True)
+    my_parser.add_argument('-l', '--log', type=str, help='logfile', required=False, default=None)
     args = my_parser.parse_args()
 
-    logging.info("Reading input tree file: %s" % args.input)
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s')
+    logger=logging.getLogger("pmbb_tree")
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    if args.log is not None:
+        print("  add logging file: "+args.log)
+        fh = logging.FileHandler(args.log, 'a')
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
+    logger.info("Reading input tree file: %s" % args.input)
     tree_file = open(args.input)
     tree = json.load(tree_file)
 
-    logging.info("Reading input key file: %s" % args.key)
+    logger.info("Reading input key file: %s" % args.key)
     df=pd.read_csv(args.key)
     df["EMPI"]=df["EMPI"].astype('str')
     df["PMBB_ID"]=df["PMBB_ID"].astype('str')
@@ -39,9 +47,9 @@ def main():
         try:
             PMBBID = (df.loc[df['EMPI'] == PatientID,"PMBB_ID"])
             PMBBID = (PMBBID.tolist()[0])
-            print(str(PMBBID))
+            logger.info("Assigning PMBBID: "+str(PMBBID))
         except:
-            print("Invalid ID")
+            logger.error("Invalid ID")
     
     if not PMBBID=="INVALID":
         for study in tree['StudyList']:
@@ -50,6 +58,7 @@ def main():
                 series["PMBBID"]=PMBBID
 
     with open(args.output, 'w', encoding='utf-8') as f:
+        logger.info("Writing to: "+args.output)
         json.dump(tree, f, ensure_ascii=False, indent=4)
 
     return(0)

@@ -32,6 +32,8 @@ class DicomTree:
         self._series_code = "0020000E"
         self._study_code = "0020000D"
 
+        self.logger=None
+
         # some default study level tags of interest
         self.default_study_tags = [
             {"Group": "0008", "Element": "0050", "Name": "AccessionNumber"},
@@ -96,7 +98,7 @@ class DicomTree:
             if tag in js:
                 instance[tag] = js[tag]
             else:
-                logging.debug("Missing tag: "+str(tag))
+                self.logger.debug("Missing tag: "+str(tag))
         
         return instance
 
@@ -108,7 +110,7 @@ class DicomTree:
             if tag in js:
                 series[tag] = js[tag]
             else:
-                logging.debug("Missing tag: "+str(tag))
+                self.logger.debug("Missing tag: "+str(tag))
 
         return series
 
@@ -148,16 +150,16 @@ class DicomTree:
         instance=self.create_instance(js, filename=filename)
 
         if not self.study_exists(js[self._study_code]['Value'][0]):    
-            logging.info("Adding new study: %s" % js[self._study_code]['Value'][0])
+            self.logger.info("Adding new study: %s" % js[self._study_code]['Value'][0])
             study = self.create_study(js, filename)
-            logging.info("Adding new series: %s" % study['SeriesList'][0][self._series_code]['Value'][0])
+            self.logger.info("Adding new series: %s" % study['SeriesList'][0][self._series_code]['Value'][0])
             self.studies.append(study)
 
         else:
             study = [x for x in self.studies if x[self._study_code]==js[self._study_code]][0]
 
         if not self.is_series_in_study(study, js[self._series_code]['Value'][0]):
-            logging.info("Adding new series: %s" % js[self._series_code]['Value'][0])
+            self.logger.info("Adding new series: %s" % js[self._series_code]['Value'][0])
             series = self.create_series(js, filename)
             study['SeriesList'].append(series)
         else:
@@ -178,14 +180,14 @@ class DicomTree:
             if level >= recursive:
                 break       
 
-        logging.info("Found %i candidate files" % len(self.files)) 
+        self.logger.info("Found %i candidate files" % len(self.files)) 
 
         for f in self.files:
             ds=None
             try:
                 ds = pydicom.dcmread(f,stop_before_pixels=True)
             except:
-                logging.warning("Could not read file: %s" % f)
+                self.logger.warning("Could not read file: %s" % f)
 
                 # Force reading can be problematic. Need more checks on the
                 # file before adding to ensure it is a valid dicom file
@@ -223,20 +225,36 @@ def main():
     my_parser.add_argument('-r', '--recursive', dest="recursive", help="how many directories deep to search", type=int, default=0)
     my_parser.add_argument('-o', '--output', type=str, help='output json file', required=True)
     my_parser.add_argument('-t', '--tagfile', type=str, help='json file of dicom tags to include', required=False)
+    my_parser.add_argument('-l', '--log', type=str, help='logfile', required=False, default=None)
     args = my_parser.parse_args()
     print(args)
+
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s')
+    logger=logging.getLogger("dicom_tree")
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    if args.log is not None:
+        print("  add logging file: "+args.log)
+        fh = logging.FileHandler(args.log, 'a')
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
+    ch = logging.StreamHandler()
+
+
+
     start = datetime.now()
 
     tags=None
     if not args.tagfile is None:
-        logging.info("Reading tag file: %s" % args.tagfile)
+        logger.info("Reading tag file: %s" % args.tagfile)
         with open(args.tagfile) as f:
             tags = json.load(f)
 
 
     if os.path.isdir(str(args.path)):
-        logging.info("Scanning directory: %s" % args.path)
+        logger.info("Scanning directory: %s" % args.path)
         dicomTree = DicomTree(args.path)
+        dicomTree.logger=logger
 
         # Define the tags to extract from dicom files
         if tags is None:
@@ -262,11 +280,12 @@ def main():
         
 
     finish = datetime.now()
-    logging.info("Finished in %s" % str(finish-start))
+    logger.info("Finished in %s" % str(finish-start))
 
     outTree = {"Directory": args.path, "StudyList": dicomTree.studies}
 
     with open(args.output, 'w', encoding='utf-8') as f:
+        logger.info("Writing to: "+args.output)
         json.dump(outTree, f, ensure_ascii=False, indent=4)
 
     return(0)
