@@ -80,9 +80,6 @@ def check_value(value, check):
     elif check.get("Operator")=="not_in":
         check_value = check.get("Value")
         valid = value not in check_value
-
-
-
     else:
         logging.error("Unknown operator: "+str(check.get("Operator")))
         valid=False
