@@ -4,7 +4,9 @@ import argparse
 import pydicom
 from pydicom.sequence import Sequence
 from pydicom.dataset import Dataset
-from prettytable import PrettyTable
+from pydicom.uid import generate_uid
+
+#from prettytable import PrettyTable
 import pandas as pd
 from pydicom.uid import generate_uid
 from datetime import datetime
@@ -14,7 +16,7 @@ import json
 
 class DicomTree:
 
-    def __init__(self, directory=None):
+    def __init__(self, directory=None, make_logger=True):
 
         self.directory = directory
         self.files = []             # list of files to scan
@@ -32,7 +34,20 @@ class DicomTree:
         self._series_code = "0020000E"
         self._study_code = "0020000D"
 
+        self.uid_prefix=None
+
         self.logger=None
+
+        if make_logger:
+            logging.basicConfig(level=logging.INFO, format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s')
+            self.logger=logging.getLogger("dicom_tree")
+            #formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            #if args.log is not None:
+            #    print("  add logging file: "+args.log)
+            #    fh = logging.FileHandler(args.log, 'a')
+            #    fh.setFormatter(formatter)
+            #    self.logger.addHandler(fh)
+
 
         # some default study level tags of interest
         self.default_study_tags = [
@@ -57,6 +72,11 @@ class DicomTree:
             {"Group": "0008", "Element": "0008", "Name": "ImageType"}
         ]
 
+    def __repr__(self):
+        print("Directory: "+self.directory)
+        print(self.studies)
+        return("")
+    
     def tag_to_dict_entry(self, tag):
         key=tag["Group"]+tag["Element"]
         name=""
@@ -102,7 +122,7 @@ class DicomTree:
         
         return instance
 
-    def create_series(self, js, filename):
+    def create_series(self, js, filename=None):
         instance = self.create_instance(js, filename=filename)
         series = {self._series_code: js[self._series_code], "InstanceList": [instance]} #SeriesInstanceUID is a required tag
 
@@ -114,7 +134,7 @@ class DicomTree:
 
         return series
 
-    def create_study(self, js, filename):
+    def create_study(self, js, filename=None):
  
         series = self.create_series(js, filename)
         study = {self._study_code: js[self._study_code], "SeriesList": [series]} #StudyInstanceUID is a required tag
@@ -215,6 +235,57 @@ class DicomTree:
 
         return(value)
 
+    def grow(self, directory):
+        self.directory = directory
+        self.studies = []
+
+    def grow_study(self, study={}):
+        new_study = study.copy()
+        if self._study_code not in new_study:
+            uid = generate_uid(prefix=self.uid_prefix)
+            self.logger.info("Generating new study UID: "+uid)
+            new_study[self._study_code] = uid
+
+        if "SeriesList" not in new_study:
+            new_study["SeriesList"]= []
+        self.studies.append(new_study)
+
+    def grow_series(self, study_id, series={}):
+        new_series = series.copy()
+
+        if self._series_code not in new_series:
+            uid = generate_uid(prefix=self.uid_prefix)
+            self.logger.info("Generating new series UID: "+uid)
+            new_series[self._series_code] = uid
+
+        if "InstanceList" not in new_series:
+            new_series["InstanceList"]= []
+
+        study_idx = None
+        if isinstance(study_id, int):
+            study_idx = study_id
+        if isinstance(study_id, str):
+            study_list = [i for i, x in enumerate(self.studies) if x[self._study_code] == study_id]
+            if len(study_list)==0:
+                self.logger.error("Could not find study: "+study_id)
+                return
+            else:
+                study_idx = study_list[0]
+
+        if study_idx >= len(self.studies):
+            self.logger.error("Study index out of range: "+str(study_id))
+            return
+
+        self.studies[study_idx]["SeriesList"].append(new_series)
+
+    def to_json(self, filename):
+        outTree = {"Directory": self.directory, "StudyList": self.studies}
+
+        with open(filename, 'w', encoding='utf-8') as f:
+            self.logger.info("Writing to: "+filename)
+            json.dump(outTree, f, ensure_ascii=False, indent=4)
+
+
 def main():
 
     logging.basicConfig(level=logging.INFO)
@@ -239,8 +310,6 @@ def main():
         logger.addHandler(fh)
 
     ch = logging.StreamHandler()
-
-
 
     start = datetime.now()
 
