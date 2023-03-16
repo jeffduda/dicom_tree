@@ -4,7 +4,7 @@ import argparse
 import pydicom
 from pydicom.sequence import Sequence
 from pydicom.dataset import Dataset
-from prettytable import PrettyTable
+#from prettytable import PrettyTable
 import pandas as pd
 from pydicom.uid import generate_uid
 from datetime import datetime
