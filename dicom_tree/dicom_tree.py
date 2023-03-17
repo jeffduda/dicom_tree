@@ -305,7 +305,7 @@ def main():
     my_parser.add_argument('-o', '--output', type=str, help='output json file', required=True)
     my_parser.add_argument('-t', '--tagfile', type=str, help='json file of dicom tags to include', required=False)
     my_parser.add_argument('-l', '--log', type=str, help='logfile', required=False, default=None)
-    my_parser.add_argument('-n', '--name' ,type=bool, help='include name of each tag', default=False, required=False, action='store_true')
+    my_parser.add_argument('-n', '--name', help='include name of each tag', default=False, required=False, action='store_true')
     args = my_parser.parse_args()
     print(args)
 
