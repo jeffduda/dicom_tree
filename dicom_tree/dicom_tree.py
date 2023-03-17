@@ -35,6 +35,7 @@ class DicomTree:
         self._study_code = "0020000D"
 
         self.uid_prefix=None
+        self.use_name=False
 
         self.logger=None
 
@@ -117,6 +118,9 @@ class DicomTree:
         for tag in self._instance_dict.keys():
             if tag in js:
                 instance[tag] = js[tag]
+                if self.use_name:
+                    instance[tag]['Name']=self._instance_dict[tag]
+
             else:
                 self.logger.debug("Missing tag: "+str(tag))
         
@@ -129,6 +133,8 @@ class DicomTree:
         for tag in self._series_dict.keys():
             if tag in js:
                 series[tag] = js[tag]
+                if self.use_name:
+                    series[tag]['Name']=self._series_dict[tag]
             else:
                 self.logger.debug("Missing tag: "+str(tag))
 
@@ -142,6 +148,8 @@ class DicomTree:
         for tag in self._study_dict.keys():
             if tag in js:
                 study[tag] = js[tag]
+                if self.use_name:
+                    study[tag]['Name']=self._study_dict[tag]
 
         return study
 
@@ -297,6 +305,7 @@ def main():
     my_parser.add_argument('-o', '--output', type=str, help='output json file', required=True)
     my_parser.add_argument('-t', '--tagfile', type=str, help='json file of dicom tags to include', required=False)
     my_parser.add_argument('-l', '--log', type=str, help='logfile', required=False, default=None)
+    my_parser.add_argument('-n', '--name' ,type=bool, help='include name of each tag', default=False, required=False, action='store_true')
     args = my_parser.parse_args()
     print(args)
 
@@ -323,6 +332,8 @@ def main():
     if os.path.isdir(str(args.path)):
         logger.info("Scanning directory: %s" % args.path)
         dicomTree = DicomTree(args.path)
+        dicomTree.use_name=args.name
+
         dicomTree.logger=logger
 
         # Define the tags to extract from dicom files
