@@ -1,0 +1,22 @@
+{
+    "Study" : [
+        { "Group": "0008", "Element": "0005", "Name": "SpecificCharacterSet", "vr": "CS", "Value": "ISO_IR 100" },
+        { "Group": "0008", "Element": "0008", "Name": "ImageType", "vr": "CS", "Value": ["ORIGINAL", "PRIMARY", "AXIAL"] },
+        { "Group": "0008", "Element": "0020", "Name": "StudyDate", "vr": "DA", "Value": "20230320" },
+        { "Group": "0008", "Element": "0030", "Name": "StudyTime", "vr": "TM", "Value": "074410.875000" },
+        { "Group": "0008", "Element": "0050", "Name": "AccessionNumber", "vr": "SH", "Value": "000000" },
+        { "Group": "0008", "Element": "0060", "Name": "Modality", "vr": "CS", "Value": "MR" },
+        { "Group": "0010", "Element": "0010", "Name": "PatientName", "vr": "PN", "Value": "MR138" },
+        { "Group": "0010", "Element": "0020", "Name": "PatientID", "vr": "LO", "Value": "MR138" },
+        { "Group": "0018", "Element": "1030", "Name": "ProtocolName", "vr": "LO", "Value": "RadialDWI" },          
+        { "Group": "0020", "Element": "000D", "Name": "StudyInstanceUID", "vr": "UI", "Value": "1.2.826.0.1.3680043.8.498.57140084928598571294829345348782275524" },
+        { "Group": "0020", "Element": "0010", "Name": "StudyID", "vr": "SH", "Value": "000000" }
+    ],
+    "Series" : [
+        [
+            { "Group": "0020", "Element": "000E", "Name": "SeriesInstanceUID", "vr": "UI", "Value": "1.2.826.0.1.3680043.8.498.33953237279910563302389296066940525894" },
+            { "Group": "0020", "Element": "0011", "Name": "SeriesNumber", "vr": "IS", "Value": 1 }   
+        ]
+    ]
+
+}

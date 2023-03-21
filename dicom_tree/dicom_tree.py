@@ -30,9 +30,13 @@ class DicomTree:
 
         self.studies = []           # list of studies (dicts) found in the files
 
-        self._instance_code = "00080018"
-        self._series_code = "0020000E"
-        self._study_code = "0020000D"
+        self._instance_code = {"Group":"0008", "Element": "0018", "Name": "SOPInstanceUID"}
+        self._series_code = {"Group": "0020", "Element": "000E", "Name": "SeriesInstanceUID"}
+        self._study_code = {"Group": "0020", "Element": "000D", "Name": "StudyInstanceUID"}
+
+        self._study_code_key = self._instance_code["Group"]+self._instance_code["Element"]
+        self._series_code_key = self._series_code["Group"]+self._series_code["Element"]
+        self._instance_code_key = self._instance_code["Group"]+self._instance_code["Element"]
 
         self.uid_prefix=None
         self.use_name=False
@@ -77,16 +81,24 @@ class DicomTree:
         print("Directory: "+self.directory)
         print(self.studies)
         return("")
-    
+
+    # Check for valid group,element and add name if not defined
     def tag_to_dict_entry(self, tag):
-        key=tag["Group"]+tag["Element"]
-        name=""
+        # this is what pydicom uses in '.to_json_dict()'
+        key = tag["Group"]+tag["Element"]
+
+        try:
+            name = pydicom.DataElement((tag["Group"],tag["Element"]), None, None).name
+        except:
+            self.logger.warning("Unknown tag: "+str(tag))
+            return None
+        
         if 'Name' in tag:
             name=tag["Name"]
-        else:
-            name = pydicom.DataElement((tag["Group"],tag["Element"]), None, None).name
-        return( (key, name) )
 
+        return( (key, {"Name": name, "Group": tag["Group"], "Element": tag["Element"]}) )
+
+    # Convert a list of tags to a dictionary
     def tag_list_to_dict(self, tag_list):
         rlist = [ self.tag_to_dict_entry(x) for x in tag_list ]
         return( dict(rlist) )
@@ -110,92 +122,135 @@ class DicomTree:
     def set_default_instance_tags(self):
         self.instance_tags = self.default_instance_tags
 
+    def get_entry(self, tag, value):
+        val=None
+        if "Value" in value:
+            val = value["Value"]
+        dat = {"Group": tag["Group"], "Element": tag["Element"], "vr": value["vr"], "Value": val}
+        entry = { tag["Name"]:  dat }
+        return entry
+
     def create_instance(self, js, filename=None):
-        instance = {self._instance_code: js[self._instance_code]} #SOPInstanceUID is a required tag
+        self.logger.info("DicomTree.create_instance("+str(filename)+")")
+        if self._instance_code_key not in js:
+            self.logger.warning("Missing required tag: "+str(self._instance_code))
+            return None
+        
+        instance = self.get_entry(self._instance_code, js[self._instance_code_key] )
         if not filename is None:
             instance['Filename'] = filename
             
-        for tag in self._instance_dict.keys():
-            if tag in js:
-                instance[tag] = js[tag]
-                if self.use_name:
-                    instance[tag]['Name']=self._instance_dict[tag]
-
-            else:
-                self.logger.debug("Missing tag: "+str(tag))
+        for key in self._instance_dict.keys():
+            if key in js:
+                instance.update(self.get_entry(self._instance_dict[key], js[key]))
         
         return instance
 
-    def create_series(self, js, filename=None):
-        instance = self.create_instance(js, filename=filename)
-        series = {self._series_code: js[self._series_code], "InstanceList": [instance]} #SeriesInstanceUID is a required tag
+    def create_series(self, dat, filename=None):
+        self.logger.info("DicomTree.create_series()")
+        instance=None
 
-        for tag in self._series_dict.keys():
-            if tag in js:
-                series[tag] = js[tag]
-                if self.use_name:
-                    series[tag]['Name']=self._series_dict[tag]
-            else:
-                self.logger.debug("Missing tag: "+str(tag))
+        if self._series_code_key not in dat:
+            self.logger.info("Creating new series UID")
+            series_uid_dat = {"vr": "UI", "Value": pydicom.generate_uid()}
+            series_uid_dat["Group"]=self._series_code["Group"]
+            series_uid_dat["Element"]=self._series_code["Element"]
+            series_uid_dat["Name"]=self._series_code["Name"]
+            dat[self._series_code_key] = series_uid_dat
+        
+        instance = self.create_instance(dat, filename=filename)
+        series = self.get_entry(self._series_code, dat[self._series_code_key])
+        
+        # Get series level entries
+        for key in self._series_dict.keys():
+            if key in dat:
+                series.update(self.get_entry(self._series_dict[key], dat[key]))
 
+        series.update({"InstanceList": [instance]})
         return series
 
     def create_study(self, js, filename=None):
+
+        self.logger.info("DicomTree.create_study()")
  
         series = self.create_series(js, filename)
-        study = {self._study_code: js[self._study_code], "SeriesList": [series]} #StudyInstanceUID is a required tag
+        study = self.get_entry( self._study_code, js[self._study_code_key] )
 
         for tag in self._study_dict.keys():
             if tag in js:
-                study[tag] = js[tag]
-                if self.use_name:
-                    study[tag]['Name']=self._study_dict[tag]
+                study.update(self.get_entry(self._study_dict[tag], js[tag]))
+        study.update({"SeriesList": [series]})
 
         return study
 
     def study_exists(self, study_uid):
         for study in self.studies:
-            if study_uid == study[self._study_code]['Value'][0]:
+            if study_uid == study[self._study_code['Name']]['Value'][0]:
                 return True
         return False
+    
+    def get_study(self, study_uid):
+        for study in self.studies:
+            if study_uid == study[self._study_code['Name']]['Value'][0]:
+                return study
+        return None
 
     def is_series_in_study(self, study, series_uid):
         for series in study["SeriesList"]:
-            if series_uid == series[self._series_code]['Value'][0]:
+            if series_uid == series[self._series_code['Name']]['Value'][0]:
                 return True
         return False
 
+    def get_series_from_study(self, study, series_uid):
+        for series in study["SeriesList"]:
+            if series_uid == series[self._series_code['Name']]['Value'][0]:
+                return series
+        return None
+    
+    def get_instance_from_series(self, series, instance_uid):
+        for instance in series["InstanceList"]:
+            if instance_uid == instance[self._instance_code['Name']]['Value'][0]:
+                return instance
+        return None
+
     def is_instance_in_series(self, series, instance_uid):
         for instance in series["InstanceList"]:
-            if instance_uid == instance[self._instance_code]['Value'][0]:
+            if instance_uid == instance[self._instance_code['Name']]['Value'][0]:
                 return True
         return False
 
     def add_instance(self, filename, ds):
-        study=None
-        series=None
-        js = ds.to_json_dict()
-        instance=self.create_instance(js, filename=filename)
 
-        if not self.study_exists(js[self._study_code]['Value'][0]):    
-            self.logger.info("Adding new study: %s" % js[self._study_code]['Value'][0])
+        js = ds.to_json_dict()
+
+        instance_study_uid = js[self._study_code_key]['Value'][0]
+        instance_series_uid = js[self._series_code_key]['Value'][0]
+        instance_instance_uid = js[self._instance_code_key]['Value'][0]
+
+        # Create new study if it doesn't exist
+        study = self.get_study(instance_study_uid)
+        if study is None:
+            self.logger.info("Adding new study: %s" % instance_study_uid)
             study = self.create_study(js, filename)
-            self.logger.info("Adding new series: %s" % study['SeriesList'][0][self._series_code]['Value'][0])
+            self.logger.info("Adding new series: %s" % instance_series_uid)
             self.studies.append(study)
 
-        else:
-            study = [x for x in self.studies if x[self._study_code]==js[self._study_code]][0]
-
-        if not self.is_series_in_study(study, js[self._series_code]['Value'][0]):
-            self.logger.info("Adding new series: %s" % js[self._series_code]['Value'][0])
+        series = self.get_series_from_study(study, instance_series_uid)
+        if series is None:
+            self.logger.info("Adding new series: %s" % js[self._series_code_key]['Value'][0])
             series = self.create_series(js, filename)
             study['SeriesList'].append(series)
-        else:
-            series = [x for x in study['SeriesList'] if x[self._series_code]==js[self._series_code]][0]
 
-        if not self.is_instance_in_series(series, js[self._instance_code]['Value'][0]):
-            #logging.info("Adding new instance: %s" % js[self._instance_code]['Value'][0])
+        instance = self.get_instance_from_series(series, instance_instance_uid)
+        if instance is None:
+            self.logger.info("Adding new instance: %s" % instance_instance_uid)
+            instance = self.create_instance(js, filename)
             series['InstanceList'].append(instance)
+
+
+        #if not self.is_instance_in_series(series, js[self._instance_code_key]['Value'][0]):
+        #    logging.info("Adding new instance: %s" % js[self._instance_code_key]['Value'][0])
+        #    series['InstanceList'].append(instance)
 
 
     def read_directory(self, recursive=0):
@@ -309,7 +364,7 @@ def main():
     args = my_parser.parse_args()
     print(args)
 
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s')
     logger=logging.getLogger("dicom_tree")
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     if args.log is not None:
