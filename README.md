@@ -23,3 +23,17 @@ optional arguments:
 ```
 
 To create a directory of dicom image files from a image volume (in nifti) and a config file of desired meta data, use dicom_tree_grow.py
+
+```
+usage: dicom_tree_grow.py [-h] -p PATH -i INPUT [-t TAGFILE]
+
+Create dicom image files
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -p PATH, --path PATH  path to the output directory
+  -i INPUT, --input INPUT
+                        input image (itk readable)
+  -t TAGFILE, --tagfile TAGFILE
+                        json file of dicom tags to include
+```
