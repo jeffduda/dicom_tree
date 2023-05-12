@@ -49,6 +49,6 @@ usage: sh dicom_to_nii.sh -i INPUTDIR -o OUTPUTDIR [-t TAG_JSON ] [-f FILTER_JSO
 Build nii.gz volumes from a directory of dicom images
  -i INTPUDIR          Directory of dicom files
  -o OUTPUTDIR         Directory to store output in
- -t TAG_JSON          File specifying the dicom tags to extract
+ -t TAG_JSON          File specifying the dicom tags to extract (default = dicom_tree/data/ct_series_dir.json)
  -f FILTER_JSON       File specifying how to filter out unwanted images (default = dicom_tree/data/default_filter.json)
  ```
