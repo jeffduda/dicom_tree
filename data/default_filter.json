@@ -1,0 +1,14 @@
+
+{
+    "Instance": [
+        {
+            "Group": "0008", 
+            "Element": "0008", 
+            "Name": "ImageType",
+            "Type": "str",
+            "Index": 0,
+            "Operator": "eq",
+            "Value": "ORIGINAL"
+        }
+    ]
+}

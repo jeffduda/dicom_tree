@@ -9,9 +9,6 @@ tags=""
 filter=""
 log=""
 
-organs=0
-slab=0
-
 
 while getopts f:i:l:o:ht: flag
 do 
@@ -25,6 +22,12 @@ do
   esac
 done
 
+if [ ! -e "${DICOMTREEPATH}/dicom_tree/dicom_tree.py" ]; then   
+    echo "DICOMTREEPATH is not set"
+    exit 1
+fi
+
+
 # Does input directory exist
 if [ ! -d "${idir}" ]; then
     echo "Input directory does not exist"
@@ -34,6 +37,11 @@ fi
 if [ ! -d "${odir}" ]; then
     echo "Create output directory: ${odir}"
     mkdir -p ${odir}
+fi
+
+# If no filter, use default (original images only)
+if [ "$filter" == "" ]; then
+    filter="${DICOMTREEPATH}/data/default_filter.json"
 fi
 
 # Parse dicom files for metadata
