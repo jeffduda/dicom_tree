@@ -44,7 +44,7 @@ For this script you must set the environment var DICOMTREEPATH, e.g.
 
 export DICOMTREEPATH=/home/myhome/dicom_tree 
 
-usage: sh dicom_to_nii.sh -i INPUTDIR -o OUTPUTDIR [-t TAG_JSON ] [-f FILTER_JSON ]
+usage: sh ${DICOMTREEPATH}/scripts/dicom_to_nii.sh -i INPUTDIR -o OUTPUTDIR [-t TAG_JSON ] [-f FILTER_JSON ]
 
 Build nii.gz volumes from a directory of dicom images
  -i INTPUDIR          Directory of dicom files
