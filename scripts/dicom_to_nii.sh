@@ -52,8 +52,8 @@ fi
 # Parse dicom files for metadata
 alias=$(basename ${idir})
 python ${DICOMTREEPATH}/dicom_tree/dicom_tree.py -p ${idir} -o ${odir}/${alias}_dicom_tree.json -t ${tags}
-python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -t ${odir}/${alias}_dicom_tree.json -o ${odir}/${alias}_jabba_tree.json -f ${filter}
-python ${DICOMTREEPATH}/dicom_tree/dicom_tree_link.py -t ${odir}/${alias}_jabba_tree.json -s ${odir} -o ${odir}/dicom
+python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -t ${odir}/${alias}_dicom_tree.json -o ${odir}/${alias}_pruned_tree.json -f ${filter}
+python ${DICOMTREEPATH}/dicom_tree/dicom_tree_link.py -t ${odir}/${alias}_pruned_tree.json -s ${odir} -o ${odir}/dicom
 
 
 nstudies=$(python ${DICOMTREEPATH}/dicom_tree/dicom_tree_get.py -t ${odir}/${alias}_dicom_tree.json -n nstudies)
@@ -68,16 +68,16 @@ for linkdir in ${linkdirs}; do
     echo "Processing: ${linkdir}"
     series_name=$(basename ${linkdir})
 
-    if [ ! -e "${odir}/${series_name}" ]; then
-        mkdir -p ${odir}/${series_name}
-    fi
+    #if [ ! -e "${odir}/${series_name}" ]; then
+    #    mkdir -p ${odir}/${series_name}
+    #fi
     if [ -e "${odir}/${series_name}_series_tree.json" ]; then
         python ${DICOMTREEPATH}/dicom_tree/dicom_tree_brief.py -t ${odir}/${series_name}_series_tree.json
-        mv ${odir}/${series_name}_series_tree.json ${odir}/${series_name}/
+        #mv ${odir}/${series_name}_series_tree.json ${odir}/${series_name}/
     fi
 
     # Convert dicom to nifti
-    ${DICOMTREEPATH}/scripts/dcm2niix_wrap.sh -i ${linkdir} -o ${odir}/${series_name} -t ${tags}
+    ${DICOMTREEPATH}/scripts/dcm2niix_wrap.sh -i ${linkdir} -o ${odir} -t ${tags}
 done
 
 if [ ! $log == "" ]; then
