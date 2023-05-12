@@ -37,3 +37,18 @@ optional arguments:
   -t TAGFILE, --tagfile TAGFILE
                         json file of dicom tags to include
 ```
+
+To use a wrapper for dcm2niix
+```
+For this script you must set the environment var DICOMTREEPATH, e.g.
+
+export DICOMTREEPATH=/home/myhome/dicom_tree 
+
+usage: sh dicom_to_nii.sh -i INPUTDIR -o OUTPUTDIR [-t TAG_JSON ] [-f FILTER_JSON ]
+
+Build nii.gz volumes from a directory of dicom images
+ -i INTPUDIR          Directory of dicom files
+ -o OUTPUTDIR         Directory to store output in
+ -t TAG_JSON          File specifying the dicom tags to extract
+ -f FILTER_JSON       File specifying how to filter out unwanted images (default = dicom_tree/data/default_filter.json)
+ ```
