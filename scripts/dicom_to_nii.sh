@@ -44,6 +44,11 @@ if [ "$filter" == "" ]; then
     filter="${DICOMTREEPATH}/data/default_filter.json"
 fi
 
+# If no filter, use default (original images only)
+if [ "$tags" == "" ]; then
+    tags="${DICOMTREEPATH}/data/default_tags.json"
+fi
+
 # Parse dicom files for metadata
 alias=$(basename ${idir})
 python ${DICOMTREEPATH}/dicom_tree/dicom_tree.py -p ${idir} -o ${odir}/${alias}_dicom_tree.json -t ${tags}
