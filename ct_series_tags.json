@@ -56,7 +56,6 @@
         {"Group": "0018", "Element": "1170", "Name": "GeneratorPower"},
         {"Group": "0018", "Element": "1190", "Name": "FocalSpots"},
         {"Group": "0018", "Element": "1182", "Name": "FocalDistance"},
-        {"Group": "0018", "Element": "1200", "Name": "DateOfLastCalibration"},
         {"Group": "0018", "Element": "1210", "Name": "ConvolutionKernel"},
         {"Group": "0018", "Element": "5100", "Name": "PatientPosition"},
         {"Group": "0018", "Element": "9305", "Name": "RevolutionTime"},

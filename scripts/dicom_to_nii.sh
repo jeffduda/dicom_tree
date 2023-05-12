@@ -1,0 +1,73 @@
+#!/bin/bash
+
+
+usage() { echo "Usage: $0 -i input_dicom_dir -o output_dir  [-q queue_name]"; exit 1; } 
+
+idir=""
+odir=""
+tags=""
+filter=""
+log=""
+
+organs=0
+slab=0
+
+
+while getopts f:i:l:o:ht: flag
+do 
+  case "${flag}" in
+     i) idir=${OPTARG};;
+     l) log=${OPTARG};;
+     f) filter=${OPTARG};;
+     o) odir=${OPTARG};;
+     t) tags=${OPTARG};;
+     h) usage;;
+  esac
+done
+
+# Does input directory exist
+if [ ! -d "${idir}" ]; then
+    echo "Input directory does not exist"
+fi
+
+# Create output directory if it does not exist
+if [ ! -d "${odir}" ]; then
+    echo "Create output directory: ${odir}"
+    mkdir -p ${odir}
+fi
+
+# Parse dicom files for metadata
+alias=$(basename ${idir})
+python ${DICOMTREEPATH}/dicom_tree/dicom_tree.py -p ${idir} -o ${odir}/${alias}_dicom_tree.json -t ${tags}
+python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -t ${odir}/${alias}_dicom_tree.json -o ${odir}/${alias}_jabba_tree.json -f ${filter}
+python ${DICOMTREEPATH}/dicom_tree/dicom_tree_link.py -t ${odir}/${alias}_jabba_tree.json -s ${odir} -o ${odir}/dicom
+
+
+nstudies=$(python ${DICOMTREEPATH}/dicom_tree/dicom_tree_get.py -t ${odir}/${alias}_dicom_tree.json -n nstudies)
+echo "Number of studies: ${nstudies}"
+cpt=$(python ${DICOMTREEPATH}/dicom_tree/dicom_tree_get.py -t ${odir}/${alias}_dicom_tree.json  -l study -n ProcedureCodeSequence -s 00080100)
+echo "CPT: ${cpt}"
+
+linkdirs=$(find ${odir}/dicom/* -type d -name "*")
+count=0
+for linkdir in ${linkdirs}; do
+    count=$((count+1))
+    echo "Processing: ${linkdir}"
+    series_name=$(basename ${linkdir})
+
+    if [ ! -e "${odir}/${series_name}" ]; then
+        mkdir -p ${odir}/${series_name}
+    fi
+    if [ -e "${odir}/${series_name}_series_tree.json" ]; then
+        python ${DICOMTREEPATH}/dicom_tree/dicom_tree_brief.py -t ${odir}/${series_name}_series_tree.json
+        mv ${odir}/${series_name}_series_tree.json ${odir}/${series_name}/
+    fi
+
+    # Convert dicom to nifti
+    ${DICOMTREEPATH}/scripts/dcm2niix_wrap.sh -i ${linkdir} -o ${odir}/${series_name} -t ${tags}
+done
+
+if [ ! $log == "" ]; then
+    echo "${alias},${cpt},${count}" >> ${log}
+fi
+

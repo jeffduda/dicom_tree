@@ -1,7 +1,8 @@
 {
     "Study" : [
         { "Group": "0008", "Element": "0005", "Name": "SpecificCharacterSet", "vr": "CS", "Value": "ISO_IR 100" },
-        { "Group": "0008", "Element": "0008", "Name": "ImageType", "vr": "CS", "Value": ["ORIGINAL", "PRIMARY", "AXIAL"] },
+        { "Group": "0008", "Element": "0008", "Name": "ImageType", "vr": "CS", "Value": ["SECONDARY", "DERIVED", "AXIAL"] },
+        { "Group": "0008", "Element": "0016", "Name": "SOPClassUID", "vr": "UI", "Value": "1.2.840.10008.5.1.4.1.1.4" },
         { "Group": "0008", "Element": "0020", "Name": "StudyDate", "vr": "DA", "Value": "20230320" },
         { "Group": "0008", "Element": "0030", "Name": "StudyTime", "vr": "TM", "Value": "074410.875000" },
         { "Group": "0008", "Element": "0050", "Name": "AccessionNumber", "vr": "SH", "Value": "000000" },

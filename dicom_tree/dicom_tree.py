@@ -34,7 +34,7 @@ class DicomTree:
         self._series_code = {"Group": "0020", "Element": "000E", "Name": "SeriesInstanceUID"}
         self._study_code = {"Group": "0020", "Element": "000D", "Name": "StudyInstanceUID"}
 
-        self._study_code_key = self._instance_code["Group"]+self._instance_code["Element"]
+        self._study_code_key = self._study_code["Group"]+self._study_code["Element"]
         self._series_code_key = self._series_code["Group"]+self._series_code["Element"]
         self._instance_code_key = self._instance_code["Group"]+self._instance_code["Element"]
 
@@ -78,8 +78,8 @@ class DicomTree:
         ]
 
     def __repr__(self):
-        print("Directory: "+self.directory)
-        print(self.studies)
+        print("Directory: "+str(self.directory))
+        print(str(self.studies))
         return("")
 
     # Check for valid group,element and add name if not defined
@@ -131,7 +131,7 @@ class DicomTree:
         return entry
 
     def create_instance(self, js, filename=None):
-        self.logger.info("DicomTree.create_instance("+str(filename)+")")
+        #self.logger.info("DicomTree.create_instance("+str(filename)+")")
         if self._instance_code_key not in js:
             self.logger.warning("Missing required tag: "+str(self._instance_code))
             return None
@@ -227,23 +227,25 @@ class DicomTree:
         instance_series_uid = js[self._series_code_key]['Value'][0]
         instance_instance_uid = js[self._instance_code_key]['Value'][0]
 
+        #self.logger.info("File has study UID: %s" % instance_study_uid)
+        #print(js["0020000D"])
         # Create new study if it doesn't exist
         study = self.get_study(instance_study_uid)
         if study is None:
-            self.logger.info("Adding new study: %s" % instance_study_uid)
+            self.logger.info("Adding new study")
             study = self.create_study(js, filename)
-            self.logger.info("Adding new series: %s" % instance_series_uid)
+            self.logger.info("Adding new series")
             self.studies.append(study)
 
         series = self.get_series_from_study(study, instance_series_uid)
         if series is None:
-            self.logger.info("Adding new series: %s" % js[self._series_code_key]['Value'][0])
+            self.logger.info("Adding new series")
             series = self.create_series(js, filename)
             study['SeriesList'].append(series)
 
         instance = self.get_instance_from_series(series, instance_instance_uid)
         if instance is None:
-            self.logger.info("Adding new instance: %s" % instance_instance_uid)
+            #self.logger.info("Adding new instance: %s" % instance_instance_uid)
             instance = self.create_instance(js, filename)
             series['InstanceList'].append(instance)
 
@@ -265,7 +267,8 @@ class DicomTree:
 
         self.logger.info("Found %i candidate files" % len(self.files)) 
 
-        for f in self.files:
+        for i,f in enumerate(self.files):
+            #print(i)
             ds=None
             try:
                 ds = pydicom.dcmread(f,stop_before_pixels=True)
@@ -368,7 +371,7 @@ def main():
     logger=logging.getLogger("dicom_tree")
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     if args.log is not None:
-        print("  add logging file: "+args.log)
+        #print("  add logging file: "+args.log)
         fh = logging.FileHandler(args.log, 'a')
         fh.setFormatter(formatter)
         logger.addHandler(fh)

@@ -7,10 +7,12 @@ from pydicom.dataset import Dataset
 from prettytable import PrettyTable
 import pandas as pd
 from pydicom.uid import generate_uid
-from datetime import datetime
+import datetime
 import logging
 import json
 import pandas as pd
+
+
 
 def main():
 
@@ -38,24 +40,69 @@ def main():
     df=pd.read_csv(args.key)
     df["EMPI"]=df["EMPI"].astype('str')
     df["PMBB_ID"]=df["PMBB_ID"].astype('str')
+    df["calico_id"]=df["calico_id"].astype('str')
+    df["days_offset"]=df["days_offset"].astype('int')
 
     instance = tree['StudyList'][0]['SeriesList'][0]['InstanceList'][0]['Filename']
     dcm = pydicom.dcmread(instance,stop_before_pixels=True)
     PatientID = dcm.get("PatientID")
     PMBBID="INVALID"
+    calico_id="INVALID"
+    patient_date_shift=0
     if not PatientID is None:
         try:
-            PMBBID = (df.loc[df['EMPI'] == PatientID,"PMBB_ID"])
-            PMBBID = (PMBBID.tolist()[0])
-            logger.info("Assigning PMBBID: "+str(PMBBID))
+            calico_id = (df.loc[df['EMPI'] == PatientID,"calico_id"])
+            calico_id = (calico_id.tolist()[0])
+            logger.info("Assigning calico_id: "+str(calico_id))
+
+            patient_date_shift = (df.loc[df['EMPI'] == PatientID,"days_offset"])
+            patient_date_shift = int(patient_date_shift.tolist()[0])
+
         except:
-            logger.error("Invalid ID")
+             logger.error("Invalid ID")
+
     
-    if not PMBBID=="INVALID":
+    if not calico_id=="INVALID":
+        if not "Calico" in tree:
+            tree["Calico"]={}
+        tree["Calico"]["calico_id"]=calico_id
+        
         for study in tree['StudyList']:
-            study["PMBBID"]=PMBBID
             for series in study['SeriesList']:
                 series["PMBBID"]=PMBBID
+
+    # shift dates
+    if patient_date_shift!=0:
+        for study in tree['StudyList']:
+            if 'StudyDate' in study:
+                study_date = study['StudyDate']['Value'][0]
+                study_date = datetime.datetime.strptime(study_date, '%Y%m%d')
+                study_date = study_date + datetime.timedelta(days=patient_date_shift)
+                study['StudyDate']['Value'][0] = study_date.strftime('%Y%m%d')
+
+            for series in study['SeriesList']:
+                if 'StudyDate' in series:
+                    study_date = series['StudyDate']['Value'][0]
+                    study_date = datetime.datetime.strptime(study_date, '%Y%m%d')
+                    study_date = study_date + datetime.timedelta(days=patient_date_shift)
+                    series['StudyDate']['Value'][0] = study_date.strftime('%Y%m%d')
+                if 'SeriesDate' in series:
+                    series_date = series['SeriesDate']['Value'][0]
+                    series_date = datetime.datetime.strptime(series_date, '%Y%m%d')
+                    series_date = series_date + datetime.timedelta(days=patient_date_shift)
+                    series['SeriesDate']['Value'][0] = series_date.strftime('%Y%m%d')
+
+                for instance in series['InstanceList']:
+                    if 'StudyDate' in instance:
+                        study_date = instance['StudyDate']['Value'][0]
+                        study_date = datetime.datetime.strptime(study_date, '%Y%m%d')
+                        study_date = study_date + datetime.timedelta(days=patient_date_shift)
+                        instance['StudyDate']['Value'][0] = study_date.strftime('%Y%m%d')
+                    if 'SeriesDate' in instance:
+                        series_date = instance['SeriesDate']['Value'][0]
+                        series_date = datetime.datetime.strptime(series_date, '%Y%m%d')
+                        series_date = series_date + datetime.timedelta(days=patient_date_shift)
+                        instance['SeriesDate']['Value'][0] = series_date.strftime('%Y%m%d')
 
     with open(args.output, 'w', encoding='utf-8') as f:
         logger.info("Writing to: "+args.output)

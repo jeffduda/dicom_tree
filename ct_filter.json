@@ -1,5 +1,17 @@
 
 {
+    "Study": [
+        {
+            "Group ": "0008",
+            "Element": "1032",
+            "Type": "sq",
+            "Name": "ProcedureCodeSequence",
+            "SeqKey": "00080100",
+            "Operator": "in",
+            "Value": ["CTABUZ","CTABEZ","CTABCZ","CTAPCAZ","CTAPCZ","CTAPEZ","CTAPUZ","CTAPUZ","CTCAPU3DZ","CTCHCAZ","CTCHCZ","CTCHULPZ","CTCHUZ"]
+        }
+
+    ],
     "Series": [
         {
             "Group": "0008", 
@@ -8,6 +20,14 @@
             "Name": "Modality",
             "Operator": "eq", 
             "Value": "CT"
+        },
+        {
+            "Group": "0018", 
+            "Element": "0015", 
+            "Name": "BodyPartExamined",
+            "Type": "str",
+            "Operator": "in",
+            "Value": ["ABDOMEN","CHEST"]
         }
     ],
     "Instance": [
@@ -27,7 +47,31 @@
             "Type": "str",
             "Index": 1,
             "Operator": "eq",
+            "Value": "PRIMARY"
+        },
+        {
+            "Group": "0008", 
+            "Element": "0008", 
+            "Name": "ImageType",
+            "Type": "str",
+            "Index": 2,
+            "Operator": "eq",
             "Value": "AXIAL"
-        } 
+        },
+        {
+            "Group": "0018", 
+            "Element": "0050", 
+            "Name": "SliceThickness",
+            "Type": "float",
+            "Operator": "ge",
+            "Value": 2.0
+        },
+        {
+            "Group": "0028", 
+            "Element": "0030", 
+            "Name": "PixelSpacing",
+            "Type": "float",
+            "Operator": "exists"
+        }
     ]
 }

@@ -49,7 +49,7 @@ def main():
     for study in tree['StudyList']:
         keep_study=True
 
-        print(str(study.get("0020000D").get("Value")[0]))
+        print(str(study.get("StudyInstanceUID").get("Value")[0]))
         #print("Check study: "+str(study.get("00080050").get("Value")))
 
 
@@ -58,19 +58,19 @@ def main():
             acq_list = []
             mod_list = []
             for instance in series['InstanceList']:
-                if "00200012" in instance:
-                    acq = str(instance.get("00200012").get("Value")[0])
+                if "AcquisitionNumber" in instance:
+                    acq = str(instance.get("AcquisitionNumber").get("Value")[0])
                     if acq not in acq_list:
                         acq_list.append(acq)
-                if "00080060" in instance:
-                    mod = str(instance.get("00080060").get("Value")[0])
+                if "Modality" in instance:
+                    mod = str(instance.get("Modality").get("Value")[0])
                     if mod not in mod_list:
                         mod_list.append(mod)
 
-            print("  series: "+str(series.get("0020000E").get("Value")[0]))
-            print("    description: "+str(series.get("0008103E").get("Value")[0]))
-            print("    number: "+str(series.get("00200011").get("Value")[0]))
-            print("    modality: "+str(series.get("00080060").get("Value")[0]))
+            print("  series: "+str(series.get("SeriesInstanceUID").get("Value")[0]))
+            print("    description: "+str(series.get("SeriesDescription").get("Value")[0]))
+            print("    number: "+str(series.get("SeriesNumber").get("Value")[0]))
+            print("    modality: "+str(series.get("Modality").get("Value")[0]))
             print("    nInstances: "+str(len(series['InstanceList'])))
             print("    acquisitions: ["+",".join(acq_list)+"]")
 
