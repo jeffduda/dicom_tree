@@ -8,11 +8,12 @@ odir=""
 tags=""
 filter=""
 log=""
+clean=1
 
-
-while getopts f:i:l:o:ht: flag
+while getopts c:f:i:l:o:ht: flag
 do 
   case "${flag}" in
+     c) clean=${OPTARG};;
      i) idir=${OPTARG};;
      l) log=${OPTARG};;
      f) filter=${OPTARG};;
@@ -51,8 +52,14 @@ fi
 
 # Parse dicom files for metadata
 alias=$(basename ${idir})
+
+# Get "tree" of dicom metadata
 python ${DICOMTREEPATH}/dicom_tree/dicom_tree.py -p ${idir} -o ${odir}/${alias}_dicom_tree.json -t ${tags}
+
+# Prune tree based on filter
 python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -t ${odir}/${alias}_dicom_tree.json -o ${odir}/${alias}_pruned_tree.json -f ${filter}
+
+# Create symbolic links to dicom files to convert (org by series)
 python ${DICOMTREEPATH}/dicom_tree/dicom_tree_link.py -t ${odir}/${alias}_pruned_tree.json -s ${odir} -o ${odir}/dicom
 
 
@@ -79,6 +86,11 @@ for linkdir in ${linkdirs}; do
     # Convert dicom to nifti
     ${DICOMTREEPATH}/scripts/dcm2niix_wrap.sh -i ${linkdir} -o ${odir} -t ${tags}
 done
+
+# clean up
+if [ $clean -eq 1 ]; then
+    rm -rf ${odir}/dicom
+fi
 
 if [ ! $log == "" ]; then
     echo "${alias},${cpt},${count}" >> ${log}
