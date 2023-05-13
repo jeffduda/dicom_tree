@@ -19,6 +19,8 @@ project(dicom_tree)
 find_package(ITK REQUIRED)
 include(${ITK_USE_FILE})
 
-add_executable(dicom_tree dicom_tree.cxx)
+find_package( Boost 1.40 COMPONENTS program_options REQUIRED )
+target_include_directories( dicom_tree PRIVATE ${Boost_INCLUDE_DIR})
 
-target_link_libraries(dicom_tree ${ITK_LIBRARIES})
+add_executable(dicom_tree dicom_tree.cxx)
+target_link_libraries(dicom_tree ${ITK_LIBRARIES} ${Boost_LIBRARIES})
