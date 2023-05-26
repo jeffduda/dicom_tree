@@ -1,5 +1,6 @@
 
-{
+{   
+    "README" : "This is sample filter file for CT images",
     "Study": [
         {
             "Group ": "0008",

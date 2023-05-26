@@ -37,12 +37,35 @@ if [ "$name" != "" ]; then
 else
     name=$(basename ${idir})
 fi
+
+# -i y ignore derived & localizers & 2D
+# -z y compress
+# -a y anonymize
 exe="dcm2niix -i y -z y -a y -o ${odir} -f "${fmt}" ${idir}"
 echo $exe
 $exe
 
 # remove things we don't want
-rm ${odir}/*Eq_1* 2> /dev/null
+eq_list=$(find ${odir} -type f -name "*Tilt_Eq_1*")
+for f in $eq_list; do
+    base=$(basename $f)
+    dname=$(dirname $f)
+    eq="${dname}/${base}.nii.gz"
+    eqj="${dname}/${base}.json"
+    echo "Removing: ${f}"
+
+    rm ${f}
+    if [ -e "${eq}" ]; then
+        echo "Removing: ${eq}"
+        rm ${eq}
+    fi
+    if [ -e "${eqj}" ]; then
+        echo "Removing: ${eqj}"
+        rm ${eqj}
+    fi
+done
+
+# Remove ROI images
 rm ${odir}/*ROI* 2> /dev/null
 
 # Get rid of duplicate images
