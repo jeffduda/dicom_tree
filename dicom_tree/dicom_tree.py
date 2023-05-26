@@ -13,6 +13,21 @@ from datetime import datetime
 import logging
 import json
 
+def list_files(path, levels=1):
+    file_list = [f.path for f in os.scandir(path) if f.is_file()]
+    if levels > 1:
+        for d in list_dirs(path, levels=levels-1):
+            file_list.extend(list_files(d, levels=1))
+
+    return file_list
+
+def list_dirs(path, levels=1):
+    dir_list = [d.path for d in os.scandir(path) if d.is_dir()]
+    if levels > 1:
+        for d in dir_list:
+            dir_list.extend(list_dirs(d, levels=levels-1))
+
+    return dir_list
 
 class DicomTree:
 
@@ -46,13 +61,6 @@ class DicomTree:
         if make_logger:
             logging.basicConfig(level=logging.INFO, format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s')
             self.logger=logging.getLogger("dicom_tree")
-            #formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-            #if args.log is not None:
-            #    print("  add logging file: "+args.log)
-            #    fh = logging.FileHandler(args.log, 'a')
-            #    fh.setFormatter(formatter)
-            #    self.logger.addHandler(fh)
-
 
         # some default study level tags of interest
         self.default_study_tags = [
@@ -255,15 +263,16 @@ class DicomTree:
         #    series['InstanceList'].append(instance)
 
 
-    def read_directory(self, recursive=0):
+    def read_directory(self, recursive=1):
 
         self.get_tag_dicts()
 
-        for level, (dirpath, dirnames, filenames) in enumerate(os.walk(self.directory)):
-            fullnames = [os.path.join(dirpath,x) for x in filenames]
-            self.files.extend(fullnames)
-            if level >= recursive:
-                break       
+        #for level, (dirpath, dirnames, filenames) in enumerate(os.walk(self.directory)):
+        #    fullnames = [os.path.join(dirpath,x) for x in filenames]
+        #    self.files.extend(fullnames)
+        #    if level >= recursive:
+        #        break       
+        self.files = list_files(self.directory, levels=recursive)
 
         self.logger.info("Found %i candidate files" % len(self.files)) 
 
