@@ -395,35 +395,37 @@ def main():
         with open(args.tagfile) as f:
             tags = json.load(f)
 
+    if not os.path.isdir(str(args.path)):
+        logger.error("Path does not exist: %s" % args.path)
+        return(1)
 
-    if os.path.isdir(str(args.path)):
-        logger.info("Scanning directory: %s" % args.path)
-        dicomTree = DicomTree(args.path)
-        dicomTree.use_name=args.name
+    logger.info("Scanning directory: %s" % args.path)
+    dicomTree = DicomTree(args.path)
+    dicomTree.use_name=args.name
 
-        dicomTree.logger=logger
+    dicomTree.logger=logger
 
-        # Define the tags to extract from dicom files
-        if tags is None:
-            dicomTree.set_default_tags()
+    # Define the tags to extract from dicom files
+    if tags is None:
+        dicomTree.set_default_tags()
+    else:
+        if 'Study' in tags:
+            dicomTree.study_tags=tags['Study']
+        else:  
+            dicomTree.set_default_study_tags()
+
+        if 'Series' in tags:
+            dicomTree.series_tags=tags['Series']
         else:
-            if 'Study' in tags:
-                dicomTree.study_tags=tags['Study']
-            else:  
-                dicomTree.set_default_study_tags()
+            dicomTree.set_default_series_tags()
 
-            if 'Series' in tags:
-                dicomTree.series_tags=tags['Series']
-            else:
-                dicomTree.set_default_series_tags()
-
-            if 'Instance' in tags:
-                dicomTree.instance_tags=tags['Instance']
-            else:
-                dicomTree.set_default_instance_tags()
+        if 'Instance' in tags:
+            dicomTree.instance_tags=tags['Instance']
+        else:
+            dicomTree.set_default_instance_tags()
 
 
-        dicomTree.read_directory(args.recursive)
+    dicomTree.read_directory(args.recursive)
         
 
     finish = datetime.now()

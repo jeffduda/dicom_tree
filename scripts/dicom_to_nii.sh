@@ -75,16 +75,17 @@ for linkdir in ${linkdirs}; do
     echo "Processing: ${linkdir}"
     series_name=$(basename ${linkdir})
 
-    #if [ ! -e "${odir}/${series_name}" ]; then
-    #    mkdir -p ${odir}/${series_name}
-    #fi
+    if [ ! -e "${odir}/${series_name}" ]; then
+        mkdir -p ${odir}/${series_name}
+    fi
+
     if [ -e "${odir}/${series_name}_series_tree.json" ]; then
         python ${DICOMTREEPATH}/dicom_tree/dicom_tree_brief.py -t ${odir}/${series_name}_series_tree.json
-        #mv ${odir}/${series_name}_series_tree.json ${odir}/${series_name}/
+        mv ${odir}/${series_name}_series_tree.json ${odir}/${series_name}/
     fi
 
     # Convert dicom to nifti
-    ${DICOMTREEPATH}/scripts/dcm2niix_wrap.sh -i ${linkdir} -o ${odir} -t ${tags}
+    ${DICOMTREEPATH}/scripts/dcm2niix_wrap.sh -i ${linkdir} -o ${odir}/${series_name} -t ${tags}
 done
 
 # clean up
