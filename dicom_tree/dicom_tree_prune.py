@@ -39,6 +39,10 @@ def check_tag(struct, check):
     idx = check.get('Index')
     if idx is None:
         idx=0
+
+    if idx >= len(tag_val):
+        return(False)
+
     tag_val=tag_val[idx]
 
     val_type = check.get('Type')
@@ -161,6 +165,9 @@ def main():
         if study_uid not in out_studies:
             continue
 
+        if study_uid not in out_series_map:
+            continue
+
         for series in study.get("SeriesList"):
             series_uid = series.get("SeriesInstanceUID").get("Value")[0]
             if series_uid not in out_series_map[study_uid]:
@@ -192,6 +199,10 @@ def main():
 
     for study in tree.get('StudyList'):
         study_uid = study.get("StudyInstanceUID").get("Value")[0]
+
+        if study_uid not in out_series_map:
+            continue
+
         if study_uid in out_studies:
 
             #print("Scan study: "+str(study_uid))

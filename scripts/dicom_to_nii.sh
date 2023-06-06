@@ -68,6 +68,11 @@ echo "Number of studies: ${nstudies}"
 cpt=$(python ${DICOMTREEPATH}/dicom_tree/dicom_tree_get.py -t ${odir}/${alias}_dicom_tree.json  -l study -n ProcedureCodeSequence -s 00080100)
 echo "CPT: ${cpt}"
 
+if [ ! -d "${odir}/dicom" ]; then
+  echo "No images to convert"
+  exit 0
+fi
+
 linkdirs=$(find ${odir}/dicom/* -type d -name "*")
 count=0
 for linkdir in ${linkdirs}; do

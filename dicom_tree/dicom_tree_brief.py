@@ -33,6 +33,18 @@ def check_value(value, check):
         value == check.get('Value')
     return(valid)
 
+def get_value(instance, name, index=0):
+    return_value="NA"
+    if name in instance:
+        value = instance.get(name).get('Value')
+        if value is None:
+            return "NA"
+        
+        if index < len(value):
+            return_value = str(value[index])
+
+    return(return_value)
+
 def main():
 
     logging.basicConfig(level=logging.INFO)
@@ -59,18 +71,18 @@ def main():
             mod_list = []
             for instance in series['InstanceList']:
                 if "AcquisitionNumber" in instance:
-                    acq = str(instance.get("AcquisitionNumber").get("Value")[0])
+                    acq = get_value(instance, "AcquisitionNumber")
                     if acq not in acq_list:
                         acq_list.append(acq)
                 if "Modality" in instance:
-                    mod = str(instance.get("Modality").get("Value")[0])
+                    mod = get_value(instance,"Modality")
                     if mod not in mod_list:
                         mod_list.append(mod)
 
-            print("  series: "+str(series.get("SeriesInstanceUID").get("Value")[0]))
-            print("    description: "+str(series.get("SeriesDescription").get("Value")[0]))
-            print("    number: "+str(series.get("SeriesNumber").get("Value")[0]))
-            print("    modality: "+str(series.get("Modality").get("Value")[0]))
+            print("  series: "+get_value(series,"SeriesInstanceUID"))
+            print("    description: "+get_value(series,"SeriesDescription"))
+            print("    number: "+get_value(series,"SeriesNumber"))
+            print("    modality: "+get_value(series,"Modality"))
             print("    nInstances: "+str(len(series['InstanceList'])))
             print("    acquisitions: ["+",".join(acq_list)+"]")
 

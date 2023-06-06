@@ -227,9 +227,31 @@ class DicomTree:
                 return True
         return False
 
+    def fix_empty_PN(self, ds):
+        for de in ds:
+            if de.VR == "PN":
+                replace=False
+                pn_value = de.value
+                for v,val in enumerate(de.value):
+                    if len(val)==0:
+                        replace=True
+                        val = " "
+                        pn_value[v] = val
+
+                if replace:
+                    de.value = pn_value
+                    ds[de.tag] = de                
+                         
+
     def add_instance(self, filename, ds):
 
-        js = ds.to_json_dict()
+        js=None
+        try:
+            js = ds.to_json_dict()
+        except:
+            self.fix_empty_PN(ds)
+            js = ds.to_json_dict()
+            return
 
         instance_study_uid = js[self._study_code_key]['Value'][0]
         instance_series_uid = js[self._series_code_key]['Value'][0]
