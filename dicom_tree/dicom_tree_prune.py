@@ -99,8 +99,10 @@ def main():
     my_parser = argparse.ArgumentParser(description='Check dicom tag names')
     my_parser.add_argument('-t', '--tree', type=str, help='json file of dicom studies to filter', required=True)
     my_parser.add_argument('-f', '--filter', type=str, help='json file of dicom tags to filter on', required=True)
+    my_parser.add_argument('-m', '--min_instances', type=int, help='minimum number of instances', required=False, default=1)
     my_parser.add_argument('-o', '--output', type=str, help='filtered dicom tree', required=True)
     args = my_parser.parse_args()
+
 
     logging.info("Reading tree file: %s" % args.tree)
     tree_file = open(args.tree)
@@ -190,8 +192,9 @@ def main():
                     instance_ids.append(instance_uid)
                     n_instances+=1
 
-            if len(instance_ids)>0:
+            if len(instance_ids) >= args.min_instances:
                 out_instance_map[series_uid]=instance_ids
+
     logging.debug("Done checking instances")
     #print(str(n_instances)+" instances passed Instance-Level check")
 

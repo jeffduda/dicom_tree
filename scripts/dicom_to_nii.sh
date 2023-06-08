@@ -9,6 +9,7 @@ tags=""
 filter=""
 log=""
 clean=1
+min_instances=1
 
 while getopts c:f:i:l:o:ht: flag
 do 
@@ -16,6 +17,7 @@ do
      c) clean=${OPTARG};;
      i) idir=${OPTARG};;
      l) log=${OPTARG};;
+     m) min_instances=${OPTARG};;
      f) filter=${OPTARG};;
      o) odir=${OPTARG};;
      t) tags=${OPTARG};;
@@ -57,7 +59,7 @@ alias=$(basename ${idir})
 python ${DICOMTREEPATH}/dicom_tree/dicom_tree.py -p ${idir} -o ${odir}/${alias}_dicom_tree.json -t ${tags}
 
 # Prune tree based on filter
-python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -t ${odir}/${alias}_dicom_tree.json -o ${odir}/${alias}_pruned_tree.json -f ${filter}
+python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -t ${odir}/${alias}_dicom_tree.json -m $min_instances -o ${odir}/${alias}_pruned_tree.json -f ${filter}
 
 # Create symbolic links to dicom files to convert (org by series)
 python ${DICOMTREEPATH}/dicom_tree/dicom_tree_link.py -t ${odir}/${alias}_pruned_tree.json -s ${odir} -o ${odir}/dicom

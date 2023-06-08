@@ -1,0 +1,38 @@
+{
+    "Study": [
+        "AccessionNumber",
+        "StudyDescription"
+    ],
+    "Series": [
+        "SeriesDescription",
+        "SeriesNumber",
+        "PatientAge",
+        "PatientSex",
+        "Modality",
+        "BodyPartExamined",
+        "ProtocolName",
+        "PatientPosition",
+        "InstitutionName",
+        "SoftwareVersions",
+        "Manufacturer",
+        "ManufacturerModelName",
+        "KVP",
+        "DeviceSerialNumber",
+        "ContrastBolusAgent",
+        "ContrastBolusRoute",
+        "ContrastBolusVolume",
+        "ContrastBolusStartTime",
+        "ContrastBolusStopTime",
+        "ContrastBolusTotalDose",
+        "ContrastFlowRate",
+        "ContrastFlowDuration",
+        "ContrastBolusIngredient",
+        "ContrastBolusIngredientConcentration"
+    ],
+    "Instance": [
+        "PixelSpacing",
+        "Rows",
+        "Columns",
+        "ImageType"
+    ]
+}
