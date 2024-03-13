@@ -8,22 +8,31 @@ odir=""
 tags=""
 filter=""
 log=""
-clean=1
+ct=0
 min_instances=1
+alias=""
+series=1
+duplicates=0
 
-while getopts c:f:i:l:o:ht: flag
+while getopts a:cdf:i:l:m:o:hs:t:x: flag
 do 
   case "${flag}" in
-     c) clean=${OPTARG};;
+     a) alias=${OPTARG};;
+     c) ct=1;;
+     d) duplicates=1;;
      i) idir=${OPTARG};;
      l) log=${OPTARG};;
      m) min_instances=${OPTARG};;
      f) filter=${OPTARG};;
      o) odir=${OPTARG};;
+     s) series=${OPTARG};;
      t) tags=${OPTARG};;
+     x) exclude+=($OPTARG);;
      h) usage;;
   esac
 done
+
+
 
 if [ ! -e "${DICOMTREEPATH}/dicom_tree/dicom_tree.py" ]; then   
     echo "DICOMTREEPATH is not set"
@@ -52,8 +61,10 @@ if [ "$tags" == "" ]; then
     tags="${DICOMTREEPATH}/data/default_tags.json"
 fi
 
-# Parse dicom files for metadata
-alias=$(basename ${idir})
+# Get name for output directory
+if [ "$alias" == "" ]; then     
+    alias=$(basename ${idir})
+fi
 
 # Get "tree" of dicom metadata
 python ${DICOMTREEPATH}/dicom_tree/dicom_tree.py -p ${idir} -o ${odir}/${alias}_dicom_tree.json -t ${tags}
@@ -62,19 +73,21 @@ python ${DICOMTREEPATH}/dicom_tree/dicom_tree.py -p ${idir} -o ${odir}/${alias}_
 python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -t ${odir}/${alias}_dicom_tree.json -m $min_instances -o ${odir}/${alias}_pruned_tree.json -f ${filter}
 
 # Create symbolic links to dicom files to convert (org by series)
-python ${DICOMTREEPATH}/dicom_tree/dicom_tree_link.py -t ${odir}/${alias}_pruned_tree.json -s ${odir} -o ${odir}/dicom
+python ${DICOMTREEPATH}/dicom_tree/dicom_tree_link.py -t ${odir}/${alias}_pruned_tree.json -s ${odir} -o ${odir}/dicom -a ${alias}
 
-
+# Print out basic info
 nstudies=$(python ${DICOMTREEPATH}/dicom_tree/dicom_tree_get.py -t ${odir}/${alias}_dicom_tree.json -n nstudies)
 echo "Number of studies: ${nstudies}"
 cpt=$(python ${DICOMTREEPATH}/dicom_tree/dicom_tree_get.py -t ${odir}/${alias}_dicom_tree.json  -l study -n ProcedureCodeSequence -s 00080100)
 echo "CPT: ${cpt}"
 
+# If no images to convert, exit
 if [ ! -d "${odir}/dicom" ]; then
-  echo "No images to convert"
-  exit 0
+    echo "No images to convert"
+    exit 0
 fi
 
+# Convert each series individually
 linkdirs=$(find ${odir}/dicom/* -type d -name "*")
 count=0
 for linkdir in ${linkdirs}; do
@@ -82,23 +95,147 @@ for linkdir in ${linkdirs}; do
     echo "Processing: ${linkdir}"
     series_name=$(basename ${linkdir})
 
-    if [ ! -e "${odir}/${series_name}" ]; then
-        mkdir -p ${odir}/${series_name}
+    # Get rid of repeat underscores
+    series_alias=$series_name
+    while [[ $series_alias = *__* ]]; do
+        series_alias=${series_alias//__/_}
+    done 
+
+    if [ ! -e "${odir}/${series_alias}" ]; then
+        mkdir -p ${odir}/${series_alias}
     fi
 
+    # Change to "clean" filename for sidecar
     if [ -e "${odir}/${series_name}_series_tree.json" ]; then
         python ${DICOMTREEPATH}/dicom_tree/dicom_tree_brief.py -t ${odir}/${series_name}_series_tree.json
-        mv ${odir}/${series_name}_series_tree.json ${odir}/${series_name}/
+        mv ${odir}/${series_name}_series_tree.json ${odir}/${series_alias}/${series_alias}_series_tree.json
     fi
 
     # Convert dicom to nifti
-    ${DICOMTREEPATH}/scripts/dcm2niix_wrap.sh -i ${linkdir} -o ${odir}/${series_name} -t ${tags}
+    ${DICOMTREEPATH}/scripts/dcm2niix_wrap.sh -i ${linkdir} -o ${odir}/${series_alias} -t ${tags}
+
+
+    # Remove any directory with no image volumes
+    series_imgs=$(find ${odir}/${series_alias} -type f -name "*.nii.gz")
+    n_imgs=${series_imgs[@]}
+    if [ "${series_imgs}" == "" ]; then
+        echo "Remove emtpy series directory ${series_alias}"
+        rm -Rf ${odir}/${series_alias}
+    fi
+
 done
 
-# clean up
-if [ $clean -eq 1 ]; then
-    rm -rf ${odir}/dicom
+
+
+# Eliminate images with uneven spacing
+eqimgs=$(find ${odir}/*/* -type f -name "*Eq_1.nii.gz")
+for eqimg in ${eqimgs}; do
+    img_name=$(basename $eqimg .nii.gz)
+    img_base=$(echo $img_name | rev | cut -c6- | rev)
+    dir_name=$(dirname $eqimg)
+
+    echo "Removing images with uneven slice spacing"
+    
+    if [ -e "${dir_name}/${img_base}.nii.gz" ]; then
+        rm ${dir_name}/${img_base}.nii.gz
+    fi 
+    if [ -e "${dir_name}/${img_base}.json" ]; then
+        rm ${dir_name}/${img_base}.json
+    fi     
+    rm $eqimg
+done
+
+
+# Try to eliminate duplicate images
+if [ $duplicates -eq 0 ]; then
+    aimgs=$(find ${odir}/*/* -type f -name "*a.nii.gz")
+    for aimg in ${aimgs}; do
+        echo "Checking for duplicate: $aimg"
+        img_name=$(basename $aimg .nii.gz)
+        img_base=$(echo $img_name | rev | cut -c2- | rev)
+        dir_name=$(dirname $aimg)
+
+        echo "  img_name=${img_name}"
+        echo "  img_base=${img_base}"
+        echo "  dir_name=${dir_name}"
+
+        ajson="${dir_name}/${img_name}.json"
+        orig_img="${dir_name}/${img_base}.nii.gz"
+        echo "Looking for: $orig_img"
+
+        if [ -e "${orig_img}" ]; then
+            echo "Checking possible match: $orig_img"
+            diff=$(diff $aimg $orig_img)
+            if [ "$diff" == "" ]; then
+                echo "Removing duplicate image: ${aimg}"
+                rm $aimg
+                if [ -e "$ajson" ]; then
+                    rm $ajson
+                fi
+            else
+                echo "Keeping possible duplicate: ${aimg}"
+                echo "diff: $diff"
+            fi 
+        fi 
+    done
 fi
+
+# CT images should have a mean value < 0
+# Any images with mean intensity > 0, is likely not a CT
+echo "Check mean intensity values"
+if [ $ct -eq 1 ]; then
+    imgs=$(find ${odir}/*/* -type f -name "*.nii.gz")
+    for img in ${imgs}; do
+        echo $img
+        intensity=$(c3d $img -info-full | grep Mean | cut -d : -f2)
+        intensity=$(printf '%.3f' $intensity)
+        echo "Mean intensity: $intensity"
+        if (( $(echo "$intensity > 0" | bc -l) )); then
+            echo "High mean intensity, unlikey to be CT: $img"
+            img_name=$(basename $img .nii.gz)
+            dir_name=$(dirname $img)
+            rm $img
+            rm ${dir_name}/${img_name}.json
+        fi
+    done
+fi
+
+# Eliminate images with fewer slices than min_instances
+echo "Check number of slices"
+imgs=$(find ${odir}/*/* -type f -name "*.nii.gz")
+for img in ${imgs}; do
+    echo $img
+    nslices=$(c3d $img -info | cut -d ";" -f1 | cut -d "[" -f2 | cut -d "]" -f1 | cut -d "," -f3 | xargs)
+    echo "Number of Slices: $nslices"
+    if (( $(echo "$nslices < $min_instances" | bc -l) )); then
+        echo "To few slices: $img"
+        img_name=$(basename $img .nii.gz)
+        dir_name=$(dirname $img)
+        rm $img
+        rm ${dir_name}/${img_name}.json
+    fi
+done
+
+
+# Don't use a dir for each series
+echo "series level output: $series"
+if [ $series -eq 0 ]; then
+    for linkdir in ${linkdirs}; do
+        count=$((count+1))
+        series_name=$(basename ${linkdir})
+        series_alias=$series_name
+        while [[ $series_alias = *__* ]]; do
+            series_alias=${series_alias//__/_}
+        done 
+        mv ${odir}/${series_alias}/* ${odir}/. 2> /dev/null
+        if [ -d "${odir}/${series_alias}" ]; then 
+            rmdir ${odir}/${series_alias}
+        fi
+    done
+fi
+
+# clean up
+rm -rf ${odir}/dicom
 
 if [ ! $log == "" ]; then
     echo "${alias},${cpt},${count}" >> ${log}
