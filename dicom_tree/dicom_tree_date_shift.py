@@ -32,19 +32,28 @@ def main():
     tree_file = open(args.input)
     tree = json.load(tree_file)
 
-    if 'Dicom' not in tree:
-        logging.error("No Dicom key found in tree")
-        return(1)
-    study = tree['Dicom']
+    for study in tree.get('StudyList'):
+        study_date_keys = [ x for x in study.keys() if 'Date' in x]
+        for study_date_key in study_date_keys:
+            logging.info("Shifting Study-level "+study_date_key)
+            study[study_date_key]['Value'][0]=shift_date(study[study_date_key]['Value'][0], args.days_offset)
 
-    if 'StudyDate' in study:
-        study['StudyDate']['Value'][0]=shift_date(study['StudyDate']['Value'][0], args.days_offset)
+        for series in study.get("SeriesList"):
+            series_date_keys = [ x for x in series.keys() if 'Date' in x]
+            for series_date_key in series_date_keys:
+                logging.info("Shifting Series-level "+series_date_key)
+                series[series_date_key]['Value'][0]=shift_date(series[series_date_key]['Value'][0], args.days_offset)
 
-    if 'SeriesDate' in study:
-        study['SeriesDate']['Value'][0]=shift_date(study['SeriesDate']['Value'][0], args.days_offset)
+            for instance in series.get("InstanceList"):
+                instance_date_keys = [ x for x in instance.keys() if 'Date' in x]
+                for instance_date_key in instance_date_keys:
+                    logging.info("Shifting Instance-level "+instance_date_key)
+                    instance[instance_date_key]['Value'][0]=shift_date(instance[instance_date_key]['Value'][0], args.days_offset)
 
     with open(args.output, 'w', encoding='utf-8') as f:
         json.dump(tree, f, ensure_ascii=False, indent=4)
+
+    logging.info("Shifted Dates written to file: %s" % args.output)
 
     return(0)
 

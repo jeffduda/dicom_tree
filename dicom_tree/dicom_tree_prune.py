@@ -5,24 +5,33 @@ import logging
 import json
 
 def get_tag(struct, check):
-    #el = check.get('Group')+check.get('Element')
     return( struct.get(check.get('Name')) )
 
-def check_tag(struct, check):
+def check_tag(struct, check, verbose=False):
 
     tag = get_tag(struct, check)
 
     # Check for existence conditions
     if check.get('Operator')=='dne':
-        return(tag is None)
+        result = tag is None
+        if verbose and not result:
+            print("Failed check for does not exist of tag: "+str(check.get('Name')))
+        return(result)
     elif check.get('Operator')=='exists':
-        return(tag is not None)
+        result = tag is not None
+        if verbose and not result:
+            print("Failed check for existence of tag: "+str(check.get('Name'))) 
+        return(result)
 
-    # If tag does not exist, return false
+    # If tag does not exist, return false or default
     if tag is None:
+        if check.get('Default') is not None:
+            return(check.get('Default'))
         return(False)
     
     if 'Value' not in tag:
+        if check.get('Default') is not None:
+            return(check.get('Default'))
         return(False)
 
     # Get value of tag in struct
@@ -33,6 +42,8 @@ def check_tag(struct, check):
     # Get value from a sequence
     if 'SeqKey' in check:
         if check.get('SeqKey') not in tag_val[0].keys():
+            if verbose:
+                print("Failed check for sequence key: "+str(check.get('SeqKey')))
             return(False)
         tag_val = tag_val[0].get(check.get('SeqKey'))['Value']
 
@@ -41,6 +52,10 @@ def check_tag(struct, check):
         idx=0
 
     if idx >= len(tag_val):
+        if check.get('Default') is not None:
+            return(check.get('Default'))
+        if verbose:
+            print("Failed check for index: "+str(idx)+" of tag: "+str(check.get('Name')))
         return(False)
 
     tag_val=tag_val[idx]
@@ -54,10 +69,12 @@ def check_tag(struct, check):
         tag_val=float(tag_val)
 
 
-    valid_value = check_value(tag_val, check)
+    valid_value = check_value(tag_val, check, verbose)
+    if verbose and not valid_value:
+        print("Failed check for value: "+str(tag_val)+" of tag: "+str(check.get('Name')))
     return(valid_value)
 
-def check_value(value, check):
+def check_value(value, check, verbose=False):
 
     # "dne" and "exists" are handled in check_tag
 
@@ -86,6 +103,12 @@ def check_value(value, check):
     elif check.get("Operator")=="not_in":
         check_value = check.get("Value")
         valid = value not in check_value
+    elif check.get("Operator")=="like":
+        check_value = check.get("Value")
+        valid = check_value.upper() in value.upper()
+    elif check.get("Operator")=="not_like":
+        check_value = check.get("Value")
+        valid = not check_value.upper() in value.upper()
     else:
         logging.error("Unknown operator: "+str(check.get("Operator")))
         valid=False
@@ -101,7 +124,9 @@ def main():
     my_parser.add_argument('-f', '--filter', type=str, help='json file of dicom tags to filter on', required=True)
     my_parser.add_argument('-m', '--min_instances', type=int, help='minimum number of instances', required=False, default=1)
     my_parser.add_argument('-o', '--output', type=str, help='filtered dicom tree', required=True)
+    my_parser.add_argument('-v', '--verbose', action='store_true', help='verbose output', required=False)
     args = my_parser.parse_args()
+    print(args)
 
 
     logging.info("Reading tree file: %s" % args.tree)
@@ -125,12 +150,20 @@ def main():
         if 'Study' in filter:
             for check in filter['Study']:
                 keep_study=keep_study and check_tag(study, check)
+                if args.verbose:
+                    if not keep_study:
+                        print("Study Failed check: "+str(check))
+                        print(study.get(check.get('Name')))
+                    else:
+                        print("Study Passed check: "+str(check))
+                        print(study.get(check.get('Name')))
 
         if keep_study:
             out_studies.append(study_uid)
 
     logging.debug("Done checking studies")
-    #print(str(len(out_studies))+" studies passed Study-Level check")
+    if args.verbose:
+        print(str(len(out_studies))+" studies passed Study-Level check")
 
     n_series=0
     for study in tree.get('StudyList'):
@@ -140,17 +173,30 @@ def main():
 
         series_ids=[]
         for series in study['SeriesList']:
+
             #print("Check series:  "+str(series.get("SeriesInstanceUID").get("Value")[0]))
-            #print("Check series#: "+str(series.get("SeriesNumber").get("Value")[0]))
+            if args.verbose:
+                print("Check series#: "+str(series.get("SeriesNumber").get("Value")[0]))
+
             series_uid = series.get("SeriesInstanceUID").get("Value")[0]
             keep_series=True
             if 'Series' in filter:
                 for check in filter['Series']:
-                    check_result =  check_tag(series, check)
+                    check_result =  check_tag(series, check, args.verbose)
+                    if not check_result and args.verbose:
+                        print("Failed check: "+str(check))
+                        print(series.get(check.get('Name')))
+
                     keep_series = keep_series and check_result
-                    #if not check_result:
-                    #    print("Failed check: "+str(check))
-                    #    print(series.get(check.get('Name')))
+                    if not keep_series and args.verbose:
+                        print("Failed check: "+str(check))
+                        print(series.get(check.get('Name')))
+
+            if args.verbose and not keep_series:
+                print("Series Failed check: "+str(series.get("SeriesNumber").get("Value")[0]))
+            else:
+                print("Series Passed check: "+str(series.get("SeriesNumber").get("Value")[0]))
+
 
             if keep_series:
                 series_ids.append(series_uid)
@@ -158,8 +204,10 @@ def main():
         if len(series_ids)>0:
             out_series_map[study_uid]=series_ids              
     logging.debug("Done checking series")
+
     #print(out_series_map)
-    #print(str(len(out_series_map.values()))+" series passed Series-Level check")
+    if args.verbose:
+        print(str(len(out_series_map.values()))+" series passed Series-Level check")
 
     n_instances=0
     for study in tree.get('StudyList'):

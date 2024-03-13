@@ -95,6 +95,8 @@
         {"Group": "0028", "Element": "0030", "Name": "PixelSpacing"},
         {"Group": "0028", "Element": "0301", "Name": "BurnedInAnnotation"},
         {"Group": "0028", "Element": "0302", "Name": "RecognizableVisualFeatures"},
+        {"Group": "0028", "Element": "1050", "Name": "WindowCenter"},
+        {"Group": "0028", "Element": "1051", "Name": "WindowWidth"},
         {"Group": "0028", "Element": "1052", "Name": "RescaleIntercept"},
         {"Group": "0028", "Element": "1053", "Name": "RescaleSlope"},
         {"Group": "0028", "Element": "1054", "Name": "RescaleType"},

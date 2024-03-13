@@ -68,6 +68,14 @@
             "Value": 2.0
         },
         {
+            "Group": "0018", 
+            "Element": "0050", 
+            "Name": "SliceThickness",
+            "Type": "float",
+            "Operator": "le",
+            "Value": 5.0
+        },
+        {
             "Group": "0028", 
             "Element": "0030", 
             "Name": "PixelSpacing",
