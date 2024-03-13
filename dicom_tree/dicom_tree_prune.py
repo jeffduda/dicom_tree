@@ -232,9 +232,10 @@ def main():
                     for check in filter['Instance']:
                         check_result = check_tag(instance, check)
                         keep_instance = keep_instance and check_result
-                        #if not check_result:
-                        #    print("Failed check: "+str(check))
-                        #    print(instance.get(check.get('Name')))
+                        if args.verbose:
+                            if not check_result:
+                                print("Failed check: "+str(check))
+                                print(instance.get(check.get('Name')))
 
                 if keep_instance:
                     instance_ids.append(instance_uid)
