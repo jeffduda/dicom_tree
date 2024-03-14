@@ -208,6 +208,7 @@ def main():
     #print(out_series_map)
     if args.verbose:
         print(str(len(out_series_map.values()))+" series passed Series-Level check")
+        print(out_series_map.values())
 
     n_instances=0
     for study in tree.get('StudyList'):
