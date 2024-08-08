@@ -13,7 +13,7 @@ from datetime import datetime
 import logging
 import json
 
-def list_files(path, levels=1):
+def list_files(path, levels=2):
     file_list = [f.path for f in os.scandir(path) if f.is_file()]
     if levels > 1:
         for d in list_dirs(path, levels=levels-1):
@@ -21,7 +21,7 @@ def list_files(path, levels=1):
 
     return file_list
 
-def list_dirs(path, levels=1):
+def list_dirs(path, levels=2):
     dir_list = [d.path for d in os.scandir(path) if d.is_dir()]
     if levels > 1:
         for d in dir_list:
@@ -294,7 +294,7 @@ class DicomTree:
         #    self.files.extend(fullnames)
         #    if level >= recursive:
         #        break       
-        self.files = list_files(self.directory, levels=recursive)
+        self.files = list_files(self.directory, levels=2)
 
         self.logger.info("Found %i candidate files" % len(self.files)) 
 
