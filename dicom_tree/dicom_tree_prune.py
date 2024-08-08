@@ -197,7 +197,6 @@ def main():
             else:
                 print("Series Passed check: "+str(series.get("SeriesNumber").get("Value")[0]))
 
-
             if keep_series:
                 series_ids.append(series_uid)
 
