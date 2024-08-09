@@ -15,7 +15,7 @@ series=1
 duplicates=0
 naming="%f"
 
-while getopts a:cdf:i:l:m:o:hs:t:x: flag
+while getopts a:cdf:i:l:m:n:o:hs:t:x: flag
 do 
   case "${flag}" in
      a) alias=${OPTARG};;
