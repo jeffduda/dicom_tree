@@ -13,6 +13,7 @@ min_instances=1
 alias=""
 series=1
 duplicates=0
+naming="%f"
 
 while getopts a:cdf:i:l:m:o:hs:t:x: flag
 do 
@@ -23,6 +24,7 @@ do
      i) idir=${OPTARG};;
      l) log=${OPTARG};;
      m) min_instances=${OPTARG};;
+     n) naming=${OPTARG};;
      f) filter=${OPTARG};;
      o) odir=${OPTARG};;
      s) series=${OPTARG};;
@@ -112,7 +114,7 @@ for linkdir in ${linkdirs}; do
     fi
 
     # Convert dicom to nifti
-    ${DICOMTREEPATH}/scripts/dcm2niix_wrap.sh -i ${linkdir} -o ${odir}/${series_alias} -t ${tags}
+    ${DICOMTREEPATH}/scripts/dcm2niix_wrap.sh -i ${linkdir} -o ${odir}/${series_alias} -t ${tags} -f ${naming}
 
 
     # Remove any directory with no image volumes

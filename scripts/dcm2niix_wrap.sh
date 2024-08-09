@@ -6,10 +6,12 @@ idir=""
 odir=""
 name=""
 tags=""
+fmt="%f"
 
-while getopts i:n:o:ht: flag
+while getopts f:i:n:o:ht: flag
 do 
   case "${flag}" in
+     f) fmt=${OPTARG};;
      i) idir=${OPTARG};;
      n) name=${OPTARG};;
      o) odir=${OPTARG};;
@@ -27,15 +29,6 @@ fi
 if [ ! -d "${odir}" ]; then
     echo "Create output directory: ${odir}"
     mkdir -p ${odir}
-fi
-
-# Run dcm2niix
-# ignore derived, localizers and 2D
-fmt="%f"
-if [ "$name" != "" ]; then
-    fmt="${name}_%f"
-else
-    name=$(basename ${idir})
 fi
 
 # -i y ignore derived & localizers & 2D
