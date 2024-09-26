@@ -39,6 +39,8 @@ class DicomTree:
         self.series_tags = []       # list of series level tags to extract
         self.instance_tags = []     # list of instance level tags to extract
 
+        self.comprehensive = False  # Use as many tags as possible
+
         self._study_dict = None
         self._series_dict = None
         self._instance_dict = None
@@ -68,6 +70,9 @@ class DicomTree:
             {"Group": "0008", "Element": "0020", "Name": "StudyDate"},
             {"Group": "0008", "Element": "0030", "Name": "StudyTime"},
             {"Group": "0008", "Element": "1030", "Name": "StudyDescription"},
+            {"Group": "0008", "Element": "1032", "Name": "ProcedureCodeSequence"},
+            {"Group": "0020", "Element": "000D", "Name": "StudyInstanceUID"},
+            {"Group": "0020", "Element": "0010", "Name": "StudyID"}
         ]    
 
         # some default series level tags of interest
@@ -76,7 +81,12 @@ class DicomTree:
             {"Group": "0008", "Element": "0021", "Name": "SeriesDate"},
             {"Group": "0008", "Element": "0031", "Name": "SeriesTime"},
             {"Group": "0008", "Element": "103E", "Name": "SeriesDescription"},
-            {"Group": "0020", "Element": "0011", "Name": "SeriesNumber"}
+            {"Group": "0018", "Element": "0015", "Name": "BodyPartExamined"},
+            {"Group": "0018", "Element": "1030", "Name": "ProtocolName"},
+            {"Group": "0018", "Element": "5100", "Name": "PatientPosition"},
+            {"Group": "0020", "Element": "0011", "Name": "SeriesNumber"},
+            {"Group": "0020", "Element": "0060", "Name": "Laterality"}
+
         ]
 
         # some default instance level tags of interest
@@ -148,7 +158,9 @@ class DicomTree:
         if not filename is None:
             instance['Filename'] = filename
             
-        for key in self._instance_dict.keys():
+        tag_list = self._instance_dict.keys()
+
+        for key in tag_list:
             if key in js:
                 instance.update(self.get_entry(self._instance_dict[key], js[key]))
         
@@ -252,6 +264,18 @@ class DicomTree:
             self.fix_empty_PN(ds)
             js = ds.to_json_dict()
             return
+
+        # Use all non-private tags
+        if self.comprehensive:
+            instance_dict={}
+            for elem in ds:
+                if not elem.is_private:
+                    tag=elem.tag
+                    key=f"{tag:>08X}"
+                    value={"Name": elem.keyword, "Group": f"{tag.group:>04X}", "Element": f"{tag.element:>04X}"}
+                    instance_dict[key]=value
+
+            self._instance_dict = instance_dict
 
         instance_study_uid = js[self._study_code_key]['Value'][0]
         instance_series_uid = js[self._series_code_key]['Value'][0]
@@ -387,7 +411,7 @@ def main():
 
     logging.basicConfig(level=logging.INFO)
 
-    my_parser = argparse.ArgumentParser(description='Display DICOM Header Info')
+    my_parser = argparse.ArgumentParser(description='Extract DICOM Header Info')
     my_parser.add_argument('-p', '--path', type=str, help='the path to the directory', required=True)
     my_parser.add_argument('-a', '--accession', type=str, help='accession number', required=False)
     my_parser.add_argument('-r', '--recursive', dest="recursive", help="how many directories deep to search", type=int, default=0)
@@ -395,6 +419,8 @@ def main():
     my_parser.add_argument('-t', '--tagfile', type=str, help='json file of dicom tags to include', required=False)
     my_parser.add_argument('-l', '--log', type=str, help='logfile', required=False, default=None)
     my_parser.add_argument('-n', '--name', help='include name of each tag', default=False, required=False, action='store_true')
+    my_parser.add_argument('-c', '--comprehensive', help='include all non-private & non-pixel tags', default=False, required=False, action='store_true')    
+    
     args = my_parser.parse_args()
     print(args)
 
@@ -412,10 +438,11 @@ def main():
     start = datetime.now()
 
     tags=None
-    if not args.tagfile is None:
-        logger.info("Reading tag file: %s" % args.tagfile)
-        with open(args.tagfile) as f:
-            tags = json.load(f)
+    if not args.comprehensive:
+        if not args.tagfile is None:
+            logger.info("Reading tag file: %s" % args.tagfile)
+            with open(args.tagfile) as f:
+                tags = json.load(f)
 
     if not os.path.isdir(str(args.path)):
         logger.error("Path does not exist: %s" % args.path)
@@ -423,6 +450,7 @@ def main():
 
     logger.info("Scanning directory: %s" % args.path)
     dicomTree = DicomTree(args.path)
+    dicomTree.comprehensive=args.comprehensive
     dicomTree.use_name=args.name
 
     dicomTree.logger=logger
@@ -446,10 +474,8 @@ def main():
         else:
             dicomTree.set_default_instance_tags()
 
-
     dicomTree.read_directory(args.recursive)
         
-
     finish = datetime.now()
     logger.info("Finished in %s" % str(finish-start))
 
