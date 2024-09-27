@@ -82,10 +82,10 @@ def main():
                     if mod not in mod_list:
                         mod_list.append(mod)
                 if "InstanceNumber" in instance:
-                    inst = get_value(instance,"InstanceNumber")
+                    inst = int(get_value(instance,"InstanceNumber"))
                     inst_list.append(inst)
                 if "SliceLocation" in instance:
-                    pos = get_value(instance,"SliceLocation")
+                    pos = float(get_value(instance,"SliceLocation"))
                     position_list.append(pos)   
 
 
