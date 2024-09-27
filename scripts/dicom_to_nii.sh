@@ -5,7 +5,7 @@ usage() { echo "Usage: $0 -i input_dicom_dir -o output_dir  [-q queue_name]"; ex
 
 idir=""
 odir=""
-tags=""
+tags=" -c "
 filter=""
 log=""
 ct=0
@@ -28,7 +28,7 @@ do
      f) filter=${OPTARG};;
      o) odir=${OPTARG};;
      s) series=${OPTARG};;
-     t) tags=${OPTARG};;
+     t) tags=" -t ${OPTARG} ";;
      x) exclude+=($OPTARG);;
      h) usage;;
   esac
@@ -69,7 +69,7 @@ if [ "$alias" == "" ]; then
 fi
 
 # Get "tree" of dicom metadata
-python ${DICOMTREEPATH}/dicom_tree/dicom_tree.py -p ${idir} -o ${odir}/${alias}_dicom_tree.json -t ${tags}
+python ${DICOMTREEPATH}/dicom_tree/dicom_tree.py -p ${idir} -o ${odir}/${alias}_dicom_tree.json ${tags}
 
 # Prune tree based on filter
 python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -t ${odir}/${alias}_dicom_tree.json -m $min_instances -o ${odir}/${alias}_pruned_tree.json -f ${filter}
