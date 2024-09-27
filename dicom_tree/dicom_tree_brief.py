@@ -83,12 +83,10 @@ def main():
                         mod_list.append(mod)
                 if "InstanceNumber" in instance:
                     inst = get_value(instance,"InstanceNumber")
-                    if inst not in inst_list:
-                        inst_list.append(inst)
-                if "ImagePositionPatient" in instance:
-                    pos = get_value(instance,"ImagePositionPatient")
-                    if pos not in position_list:
-                        position_list.append(pos)   
+                    inst_list.append(inst)
+                if "SliceLocation" in instance:
+                    pos = get_value(instance,"SliceLocation")
+                    position_list.append(pos)   
 
 
             inst_list.sort()
