@@ -51,6 +51,7 @@ def main():
 
     my_parser = argparse.ArgumentParser(description='Check dicom tag names')
     my_parser.add_argument('-t', '--tree', type=str, help='json file of dicom studies to filter', required=True)   
+    my_parser.add_argument('-v', '--verbose', type=bool, default=False, on_action='store_true', help='verbose output')
     args = my_parser.parse_args()
 
     logging.info("Reading tree file: %s" % args.tree)
@@ -69,6 +70,8 @@ def main():
         for series in study['SeriesList']:
             acq_list = []
             mod_list = []
+            inst_list = []
+            position_list = []
             for instance in series['InstanceList']:
                 if "AcquisitionNumber" in instance:
                     acq = get_value(instance, "AcquisitionNumber")
@@ -78,6 +81,18 @@ def main():
                     mod = get_value(instance,"Modality")
                     if mod not in mod_list:
                         mod_list.append(mod)
+                if "InstanceNumber" in instance:
+                    inst = get_value(instance,"InstanceNumber")
+                    if inst not in inst_list:
+                        inst_list.append(inst)
+                if "ImagePositionPatient" in instance:
+                    pos = get_value(instance,"ImagePositionPatient")
+                    if pos not in position_list:
+                        position_list.append(pos)   
+
+
+            inst_list.sort()
+            position_list.sort()
 
             print("  series: "+get_value(series,"SeriesInstanceUID"))
             print("    description: "+get_value(series,"SeriesDescription"))
@@ -85,6 +100,10 @@ def main():
             print("    modality: "+get_value(series,"Modality"))
             print("    nInstances: "+str(len(series['InstanceList'])))
             print("    acquisitions: ["+",".join(acq_list)+"]")
+            if args.verbose:
+                print("    instances: ["+",".join(inst_list)+"]")
+                print("    positions: ["+",".join(position_list)+"]")
+
 
 
     return(0)
