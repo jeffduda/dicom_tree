@@ -51,7 +51,7 @@ def main():
 
     my_parser = argparse.ArgumentParser(description='Check dicom tag names')
     my_parser.add_argument('-t', '--tree', type=str, help='json file of dicom studies to filter', required=True)   
-    my_parser.add_argument('-v', '--verbose', type=bool, default=False, action='store_true', help='verbose output')
+    my_parser.add_argument('-v', '--verbose', default=False, action='store_true', help='verbose output')
     args = my_parser.parse_args()
 
     logging.info("Reading tree file: %s" % args.tree)
