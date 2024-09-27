@@ -69,10 +69,10 @@ if [ "$alias" == "" ]; then
 fi
 
 # Get "tree" of dicom metadata
-python ${DICOMTREEPATH}/dicom_tree/dicom_tree.py -p ${idir} -o ${odir}/${alias}_dicom_tree.json ${tags}
+python ${DICOMTREEPATH}/dicom_tree/dicom_tree.py -p ${idir} -o ${odir}/${alias}_study_tree.json ${tags}
 
 # Prune tree based on filter
-python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -t ${odir}/${alias}_dicom_tree.json -m $min_instances -o ${odir}/${alias}_pruned_tree.json -f ${filter}
+python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -t ${odir}/${alias}_study_tree.json -m $min_instances -o ${odir}/${alias}_pruned_tree.json -f ${filter}
 
 # Create symbolic links to dicom files to convert (org by series)
 python ${DICOMTREEPATH}/dicom_tree/dicom_tree_link.py -t ${odir}/${alias}_pruned_tree.json -s ${odir} -o ${odir}/dicom -a ${alias}
@@ -139,6 +139,7 @@ for eqimg in ${eqimgs}; do
     echo "Removing images with uneven slice spacing"
     
     if [ -e "${dir_name}/${img_base}.nii.gz" ]; then
+        echo "  - removing ${dir_name}/${img_base}.nii.gz"
         rm ${dir_name}/${img_base}.nii.gz
     fi 
     if [ -e "${dir_name}/${img_base}.json" ]; then
