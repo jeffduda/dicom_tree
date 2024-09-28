@@ -243,16 +243,20 @@ def contiguous_series(tree):
                     if instance["InstanceNumber"]["Value"][0] in inst_num_consecutive:
                         inst_consecutive.append(instance)   
 
-            position_list=[]
-            for instance in inst_consecutive:
-                if "SliceLocation" in instance:
-                    position_list.append(instance["SliceLocation"]["Value"][0])
-            position_consecutive = longest_evenly_spaced_sequences(position_list)
-            position_inst_consecutive=[]
-            for instance in inst_consecutive:
-                if "SliceLocation" in instance:
-                    if instance["SliceLocation"]["Value"][0] in position_consecutive:
-                        position_inst_consecutive.append(instance)          
+            position_inst_consecutive=inst_consecutive
+            if len(inst_consecutive) > 1:
+                
+                position_list=[]
+                for instance in inst_consecutive:
+                    if "SliceLocation" in instance:
+                        position_list.append(instance["SliceLocation"]["Value"][0])
+
+                position_consecutive = longest_evenly_spaced_sequences(position_list)
+                position_inst_consecutive=[]
+                for instance in inst_consecutive:
+                    if "SliceLocation" in instance:
+                        if instance["SliceLocation"]["Value"][0] in position_consecutive:
+                            position_inst_consecutive.append(instance)          
 
             series["InstanceList"]=position_inst_consecutive
 
