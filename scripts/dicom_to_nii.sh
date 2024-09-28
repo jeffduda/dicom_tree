@@ -78,9 +78,9 @@ python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -c -t ${odir}/${alias}_st
 python ${DICOMTREEPATH}/dicom_tree/dicom_tree_link.py -t ${odir}/${alias}_pruned_tree.json -s ${odir} -o ${odir}/dicom -a ${alias}
 
 # Print out basic info
-nstudies=$(python ${DICOMTREEPATH}/dicom_tree/dicom_tree_get.py -t ${odir}/${alias}_dicom_tree.json -n nstudies)
+nstudies=$(python ${DICOMTREEPATH}/dicom_tree/dicom_tree_get.py -t ${odir}/${alias}_study_tree.json -n nstudies)
 echo "Number of studies: ${nstudies}"
-cpt=$(python ${DICOMTREEPATH}/dicom_tree/dicom_tree_get.py -t ${odir}/${alias}_dicom_tree.json  -l study -n ProcedureCodeSequence -s 00080100)
+cpt=$(python ${DICOMTREEPATH}/dicom_tree/dicom_tree_get.py -t ${odir}/${alias}_study_tree.json  -l study -n ProcedureCodeSequence -s 00080100)
 echo "CPT: ${cpt}"
 
 # If no images to convert, exit
