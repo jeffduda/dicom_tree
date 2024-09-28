@@ -230,35 +230,37 @@ def contiguous_series(tree):
         for series in study["SeriesList"]:
             inst_list=[]
             position_list=[]
-            for instance in series["InstanceList"]:
-                if "InstanceNumber" in instance:
-                    inst_list.append(instance["InstanceNumber"]["Value"][0])
-                if "SliceLocation" in instance:
-                    position_list.append(instance["SliceLocation"]["Value"][0])
+            if len(series["InstanceList"]) > 1:
 
-            inst_num_consecutive = longest_consecutive_sequences(inst_list, first=True)
-            inst_consecutive=[]
-            for instance in series["InstanceList"]:
-                if "InstanceNumber" in instance:
-                    if instance["InstanceNumber"]["Value"][0] in inst_num_consecutive:
-                        inst_consecutive.append(instance)   
-
-            position_inst_consecutive=inst_consecutive
-            if len(inst_consecutive) > 1:
-                
-                position_list=[]
-                for instance in inst_consecutive:
+                for instance in series["InstanceList"]:
+                    if "InstanceNumber" in instance:
+                        inst_list.append(instance["InstanceNumber"]["Value"][0])
                     if "SliceLocation" in instance:
                         position_list.append(instance["SliceLocation"]["Value"][0])
 
-                position_consecutive = longest_evenly_spaced_sequences(position_list)
-                position_inst_consecutive=[]
-                for instance in inst_consecutive:
-                    if "SliceLocation" in instance:
-                        if instance["SliceLocation"]["Value"][0] in position_consecutive:
-                            position_inst_consecutive.append(instance)          
+                inst_num_consecutive = longest_consecutive_sequences(inst_list, first=True)
+                inst_consecutive=[]
+                for instance in series["InstanceList"]:
+                    if "InstanceNumber" in instance:
+                        if instance["InstanceNumber"]["Value"][0] in inst_num_consecutive:
+                            inst_consecutive.append(instance)   
 
-            series["InstanceList"]=position_inst_consecutive
+                position_inst_consecutive=inst_consecutive
+                if len(inst_consecutive) > 1:
+                    
+                    position_list=[]
+                    for instance in inst_consecutive:
+                        if "SliceLocation" in instance:
+                            position_list.append(instance["SliceLocation"]["Value"][0])
+
+                    position_consecutive = longest_evenly_spaced_sequences(position_list)
+                    position_inst_consecutive=[]
+                    for instance in inst_consecutive:
+                        if "SliceLocation" in instance:
+                            if instance["SliceLocation"]["Value"][0] in position_consecutive:
+                                position_inst_consecutive.append(instance)          
+
+                series["InstanceList"]=position_inst_consecutive
 
     return(tree)
 
@@ -272,7 +274,7 @@ def main():
     my_parser.add_argument('-m', '--min_instances', type=int, help='minimum number of instances', required=False, default=1)
     my_parser.add_argument('-o', '--output', type=str, help='filtered dicom tree', required=True)
     my_parser.add_argument('-v', '--verbose', action='store_true', help='verbose output', required=False)
-    my_parser.add_argument('-c', '--continguous', action='store_true', help='only keep contiguous instances', default=False, required=False)
+    my_parser.add_argument('-c', '--contiguous', action='store_true', help='only keep contiguous instances', default=False, required=False)
     args = my_parser.parse_args()
     print(args)
 
@@ -281,7 +283,7 @@ def main():
     tree_file = open(args.tree)
     tree = json.load(tree_file)
 
-    if args.continguous:
+    if args.contiguous:
         tree = contiguous_series(tree)
 
     if args.filter is None:
