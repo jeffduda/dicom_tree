@@ -13,6 +13,116 @@ from datetime import datetime
 import logging
 import json
 
+def longest_identical_sequence_indices(lst, tolerance=None):
+    """Finds the indices of the longest sequence of identical values in a list.
+
+    Args:
+        lst: The input list.
+
+    Returns:
+        A list of tuples, where each tuple contains the starting and ending indices of a longest sequence.
+    """
+
+    if not lst:
+        return []
+
+    max_len = 1
+    max_start = 0
+    max_end = 0
+    current_len = 1
+    current_start = 0
+
+    for i in range(1, len(lst)):
+
+        continuous=False
+        if tolerance is not None:
+            if abs(lst[i] - lst[i - 1]) <= tolerance:
+                continuous=True
+        else:
+            if lst[i] == lst[i - 1]:
+                continuous=True 
+
+        if continuous:
+            current_len += 1
+        else:
+            if current_len > max_len:
+                max_len = current_len
+                max_start = current_start
+                max_end = i - 1
+            current_len = 1
+            current_start = i
+
+    # Check for the last sequence
+    if current_len > max_len:
+        max_len = current_len
+        max_start = current_start
+        max_end = len(lst) - 1
+
+    return (max_start, max_end)
+
+def longest_evenly_spaced_sequences(nums):
+    """
+    Finds the longest sequences of evenly spaced values in a list.
+
+    Args:
+        nums: A list of numeric values.
+
+    Returns:
+        A list of lists, where each list contains all values in the longest sequence.
+    """
+
+    nums.sort()
+    diffs=[0 for i in range(len(nums)-1)]
+
+    for idx,num in enumerate(nums):
+        if idx>0:
+            diffs[idx-1]=num-nums[idx-1]
+
+    chain=longest_identical_sequence_indices(diffs, tolerance=0.0001)
+    evenly_spaced=nums[chain[0]:chain[1]+1]
+    return evenly_spaced
+
+def longest_consecutive_sequences(nums, first=False):
+    """
+    Finds the longest sequences of contiguous integers in a list.
+
+    Args:
+        nums: A list of integers.
+
+    Returns:
+        A list of tuples, where each tuple contains the starting and ending indices of a longest sequence.
+    """
+
+    num_set = set(nums)
+    max_length = 0
+    longest_sequences = []
+
+    for num in nums:
+        if num - 1 not in num_set:
+            current_num = num
+            current_length = 1
+
+            while current_num + 1 in num_set:
+                current_num += 1
+                current_length += 1
+
+            if current_length > max_length:
+                max_length = current_length 
+
+                longest_sequences = [(num, num + current_length - 1)]
+            elif current_length == max_length:
+                longest_sequences.append((num, num + current_length - 1))
+    longest_chains=[]
+    for i in longest_sequences:
+        inst_list=[j for j in range(i[0],i[1]+1)]
+        longest_chains.append(inst_list)
+    
+    if first:
+        return longest_chains[0]
+    
+    return longest_chains
+
+
 def list_files(path, levels=2):
     file_list = [f.path for f in os.scandir(path) if f.is_file()]
     if levels > 1:
@@ -405,6 +515,27 @@ class DicomTree:
         with open(filename, 'w', encoding='utf-8') as f:
             self.logger.info("Writing to: "+filename)
             json.dump(outTree, f, ensure_ascii=False, indent=4)
+
+    def contiguous_series(self):
+        for study in self.studies:
+            for series in study["SeriesList"]:
+                inst_list=[]
+                position_list=[]
+                for instance in series["InstanceList"]:
+                    if "InstanceNumber" in instance:
+                        inst_list.append(instance["InstanceNumber"]["Value"][0])
+                    if "SliceLocation" in instance:
+                        position_list.append(instance["SliceLocation"]["Value"][0])
+
+                inst_num_consecutive = longest_consecutive_sequences(inst_list, first=True)
+                inst_consecutive=[]
+                for instance in series["InstanceList"]:
+                    if "InstanceNumber" in instance:
+                        if instance["InstanceNumber"]["Value"][0] in inst_num_consecutive:
+                            inst_consecutive.append(instance)   
+
+                series["InstanceList"]=inst_consecutive
+
 
 
 def main():

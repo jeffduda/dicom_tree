@@ -72,7 +72,7 @@ fi
 python ${DICOMTREEPATH}/dicom_tree/dicom_tree.py -p ${idir} -o ${odir}/${alias}_study_tree.json ${tags}
 
 # Prune tree based on filter
-python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -t ${odir}/${alias}_study_tree.json -m $min_instances -o ${odir}/${alias}_pruned_tree.json -f ${filter}
+python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -c -t ${odir}/${alias}_study_tree.json -m $min_instances -o ${odir}/${alias}_pruned_tree.json -f ${filter}
 
 # Create symbolic links to dicom files to convert (org by series)
 python ${DICOMTREEPATH}/dicom_tree/dicom_tree_link.py -t ${odir}/${alias}_pruned_tree.json -s ${odir} -o ${odir}/dicom -a ${alias}
