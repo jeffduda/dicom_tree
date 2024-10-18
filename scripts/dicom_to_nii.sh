@@ -71,11 +71,15 @@ fi
 # Get "tree" of dicom metadata
 python ${DICOMTREEPATH}/dicom_tree/dicom_tree.py -p ${idir} -o ${odir}/${alias}_study_tree.json ${tags}
 
-# Prune tree based on filter
-python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -c -t ${odir}/${alias}_study_tree.json -m $min_instances -o ${odir}/${alias}_pruned_tree.json -f ${filter}
+pruned="${odir}/${alias}_study_tree.json"
+if [[ "$filter" != "" ]]; then
+    # Prune tree based on filter
+    pruned="${odir}/${alias}_pruned_tree.json"
+    python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -c -t ${odir}/${alias}_study_tree.json -m $min_instances -o ${pruned} -f ${filter}
+fi
 
 # Create symbolic links to dicom files to convert (org by series)
-python ${DICOMTREEPATH}/dicom_tree/dicom_tree_link.py -t ${odir}/${alias}_pruned_tree.json -s ${odir} -o ${odir}/dicom -a ${alias}
+python ${DICOMTREEPATH}/dicom_tree/dicom_tree_link.py -t ${pruned} -s ${odir} -o ${odir}/dicom -a ${alias}
 
 # Print out basic info
 nstudies=$(python ${DICOMTREEPATH}/dicom_tree/dicom_tree_get.py -t ${odir}/${alias}_study_tree.json -n nstudies)
