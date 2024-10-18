@@ -72,7 +72,7 @@ fi
 python ${DICOMTREEPATH}/dicom_tree/dicom_tree.py -p ${idir} -o ${odir}/${alias}_study_tree.json ${tags}
 
 pruned="${odir}/${alias}_study_tree.json"
-if [[ "$filter" != "" ]]; then
+if [ -e "${filter}" ]; then
     # Prune tree based on filter
     pruned="${odir}/${alias}_pruned_tree.json"
     python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -c -t ${odir}/${alias}_study_tree.json -m $min_instances -o ${pruned} -f ${filter}
