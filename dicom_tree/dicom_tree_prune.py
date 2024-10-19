@@ -230,7 +230,7 @@ def contiguous_series(tree):
         for series in study["SeriesList"]:
             inst_list=[]
             position_list=[]
-            if len(series["InstanceList"]) > 1:
+            if len(series["InstanceList"]) > 2:
 
                 for instance in series["InstanceList"]:
                     if "InstanceNumber" in instance:
