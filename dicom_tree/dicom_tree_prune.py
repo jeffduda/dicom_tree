@@ -61,13 +61,14 @@ def longest_evenly_spaced_sequences(nums):
     Returns:
         A list of lists, where each list contains all values in the longest sequence.
     """
-
     nums.sort()
     diffs=[0 for i in range(len(nums)-1)]
 
     for idx,num in enumerate(nums):
         if idx>0:
             diffs[idx-1]=num-nums[idx-1]
+
+
 
     chain=longest_identical_sequence_indices(diffs, tolerance=0.0001)
     evenly_spaced=nums[chain[0]:chain[1]+1]
@@ -246,21 +247,26 @@ def contiguous_series(tree):
                             inst_consecutive.append(instance)   
 
                 position_inst_consecutive=inst_consecutive
-                if len(inst_consecutive) > 1:
+                if len(inst_consecutive) > 2:
                     
                     position_list=[]
                     for instance in inst_consecutive:
                         if "SliceLocation" in instance:
                             position_list.append(instance["SliceLocation"]["Value"][0])
 
-                    position_consecutive = longest_evenly_spaced_sequences(position_list)
-                    position_inst_consecutive=[]
-                    for instance in inst_consecutive:
-                        if "SliceLocation" in instance:
-                            if instance["SliceLocation"]["Value"][0] in position_consecutive:
-                                position_inst_consecutive.append(instance)          
+                    if len(position_list) != len(inst_consecutive):
+                        print("WARNING: Instance/s are missing SliceLocation in series: "+str(series["SeriesNumber"]["Value"][0]))
+                        series["InstanceList"]=[]
+                    else:
+                
+                        position_consecutive = longest_evenly_spaced_sequences(position_list)
+                        position_inst_consecutive=[]
+                        for instance in inst_consecutive:
+                            if "SliceLocation" in instance:
+                                if instance["SliceLocation"]["Value"][0] in position_consecutive:
+                                    position_inst_consecutive.append(instance)          
 
-                series["InstanceList"]=position_inst_consecutive
+                    series["InstanceList"]=position_inst_consecutive
 
     return(tree)
 
