@@ -41,7 +41,7 @@ def main():
         format='%(asctime)s %(name)s %(levelname)-8s %(message)s',
         level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S')
-    formatter = logging.Formatter(fmt='%(asctime)s %(name)s %(levelname)-8s %(message)s %s', prefix, datefmt='%Y-%m-%d %H:%M:%S')
+    formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)-8s %(message)s %s', prefix, datefmt='%Y-%m-%d %H:%M:%S')
     logger = logging.getLogger("dicom_tree_link")
     logger.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
