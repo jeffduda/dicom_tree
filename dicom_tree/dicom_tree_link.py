@@ -32,10 +32,12 @@ def main():
     args = my_parser.parse_args()
 
     slurminfo=''
-    slurm=os.environ.get('SLURM_ARRAY_TASK_ID')
+    slurmtask=os.environ.get('SLURM_ARRAY_TASK_ID')
     slurmid=os.environ.get('SLURM_JOB_ID')
-    if slurm is not None:
-        slurminfo="- SLURM_JOB_ID="+slurmid + " - SLURM_ARRAY_TASK_ID="+slurm+" "
+    if slurmid is not None:
+        slurminfo="- SLURM="+slurmid
+        if slurmtask is not None:
+            slurminfo = slurminfo+"_"+slurmtask
 
 
     logging.basicConfig(
