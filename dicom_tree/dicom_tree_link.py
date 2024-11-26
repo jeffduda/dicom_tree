@@ -28,12 +28,29 @@ def main():
     my_parser.add_argument('-o', '--output', type=str, help='output directory for links', required=True)
     my_parser.add_argument('-s', '--series', type=str, help='output directory for series trees', required=False)
     my_parser.add_argument('-a', '--alias', type=str, help='alias name for subdirectories', required=False)
+
     args = my_parser.parse_args()
 
-    logging.info("Reading tree file: %s" % args.tree)
+    prefix=''
+    slurm=os.environ.get('SLURM_ARRAY_TASK_ID')
+    if slurm is not None:
+        prefix=" - SLURM_ARRAY_TASK_ID="+slurm+" "
+
+
+    logging.basicConfig(
+        format='%(asctime)s %(name)s %(levelname)-8s %(message)s',
+        level=logging.DEBUG,
+        datefmt='%Y-%m-%d %H:%M:%S')
+    formatter = logging.Formatter(fmt='%(asctime)s %(name)s %(levelname)-8s %(message)s %s', prefix, datefmt='%Y-%m-%d %H:%M:%S')
+    logger = logging.getLogger("dicom_tree_link")
+    logger.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
+    logger.info("Linking tree file: %s" % args.tree)
     tree_file = open(args.tree)
     tree = json.load(tree_file)
-
 
     for study in tree.get('StudyList'):
         for series in study.get("SeriesList"):
