@@ -31,17 +31,17 @@ def main():
 
     args = my_parser.parse_args()
 
-    prefix=''
+    slurmid=''
     slurm=os.environ.get('SLURM_ARRAY_TASK_ID')
     if slurm is not None:
-        prefix=" - SLURM_ARRAY_TASK_ID="+slurm+" "
+        slurmid=" - SLURM_ARRAY_TASK_ID="+slurm+" "
 
 
     logging.basicConfig(
         format='%(asctime)s %(name)s %(levelname)-8s %(message)s',
         level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S')
-    formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)-8s %(message)s %s', prefix, datefmt='%Y-%m-%d %H:%M:%S')
+    formatter = logging.Formatter(fmt=f'%(asctime)s %(name)s %(levelname)-8s %(message)s {slurmid}', datefmt='%Y-%m-%d %H:%M:%S')
     logger = logging.getLogger("dicom_tree_link")
     logger.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
