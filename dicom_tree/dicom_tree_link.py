@@ -12,11 +12,9 @@ def clean_string(in_str):
     for bc in bad_char:
         out_str = out_str.replace(bc, '_')
 
-    #rep_char = ['__','___','____','_____']
-    #for bc in rep_char:
-    #    out_str = out_str.replace(bc, '_')    
     while '__' in out_str:
         out_str = out_str.replace('__', '_')
+    out_str = out_str.rstrip("_")
 
     return(out_str)
 
