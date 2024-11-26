@@ -221,7 +221,7 @@ def check_value(value, check, verbose=False):
         check_value = check.get("Value")
         valid = not check_value.upper() in value.upper()
     else:
-        logging.error("Unknown operator: "+str(check.get("Operator")))
+        #logging.error("Unknown operator: "+str(check.get("Operator")))
         valid=False
 
     return(valid)
@@ -272,8 +272,6 @@ def contiguous_series(tree):
 
 def main():
 
-    logging.basicConfig(level=logging.INFO)
-
     my_parser = argparse.ArgumentParser(description='Check dicom tag names')
     my_parser.add_argument('-t', '--tree', type=str, help='json file of dicom studies to filter', required=True)
     my_parser.add_argument('-f', '--filter', type=str, help='json file of dicom tags to filter on', required=False, default=None)
@@ -282,10 +280,29 @@ def main():
     my_parser.add_argument('-v', '--verbose', action='store_true', help='verbose output', required=False)
     my_parser.add_argument('-c', '--contiguous', action='store_true', help='only keep contiguous instances', default=False, required=False)
     args = my_parser.parse_args()
-    print(args)
+
+    slurminfo=''
+    slurmtask=os.environ.get('SLURM_ARRAY_TASK_ID')
+    slurmid=os.environ.get('SLURM_JOB_ID')
+    if slurmid is not None:
+        slurminfo="- SLURM="+slurmid
+        if slurmtask is not None:
+            slurminfo = slurminfo+"_"+slurmtask
 
 
-    logging.info("Reading tree file: %s" % args.tree)
+    logging.basicConfig(
+        format='%(asctime)s %(name)s %(levelname)-8s %(message)s',
+        level=logging.INFO,
+        datefmt='%Y-%m-%d %H:%M:%S')
+    formatter = logging.Formatter(fmt=f'%(asctime)s %(name)s %(levelname)-8s %(message)s {slurminfo}', datefmt='%Y-%m-%d %H:%M:%S')
+    logger = logging.getLogger("dicom_tree_prune")
+    logger.setLevel(logging.INFO)
+    ch = logging.StreamHandler()
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
+
+    logger.info("Reading tree file: %s" % args.tree)
     tree_file = open(args.tree)
     tree = json.load(tree_file)
 
@@ -297,7 +314,7 @@ def main():
             json.dump(tree, f, ensure_ascii=False, indent=4)
         return(0)
 
-    logging.info("Reading filter file: %s" % args.filter)
+    logger.info("Reading filter file: %s" % args.filter)
     filter_file = open(args.filter)
     filter = json.load(filter_file)
 
@@ -307,8 +324,8 @@ def main():
 
     study_ids=[]
     for study_id, study in enumerate(tree['StudyList']):
-        print("Check accession: "+str(study.get("AccessionNumber").get("Value")[0]))
-        print("Check study: "+str(study.get("StudyInstanceUID").get("Value")[0]))
+        #print("Check accession: "+str(study.get("AccessionNumber").get("Value")[0]))
+        #print("Check study: "+str(study.get("StudyInstanceUID").get("Value")[0]))
         study_uid = study.get("StudyInstanceUID").get("Value")[0]
         keep_study=True
         if 'Study' in filter:
@@ -325,9 +342,10 @@ def main():
         if keep_study:
             out_studies.append(study_uid)
 
-    logging.debug("Done checking studies")
+    logger.debug("Done checking studies")
     if args.verbose:
-        print(str(len(out_studies))+" studies passed Study-Level check")
+        #print(str(len(out_studies))+" studies passed Study-Level check")
+        logger.info(str(len(out_studies))+" studies passed Study-Level check")
 
     n_series=0
     for study in tree.get('StudyList'):
@@ -340,7 +358,7 @@ def main():
 
             #print("Check series:  "+str(series.get("SeriesInstanceUID").get("Value")[0]))
             if args.verbose:
-                print("Check series#: "+str(series.get("SeriesNumber").get("Value")[0]))
+                logger.info("Check series#: "+str(series.get("SeriesNumber").get("Value")[0]))
 
             series_uid = series.get("SeriesInstanceUID").get("Value")[0]
             keep_series=True
@@ -348,30 +366,32 @@ def main():
                 for check in filter['Series']:
                     check_result =  check_tag(series, check, args.verbose)
                     if not check_result and args.verbose:
-                        print("Failed check: "+str(check))
-                        print(series.get(check.get('Name')))
+                        logger.info(series.get(check.get('Name')) + " Failed check: "+ str(check))
+                        #print("Failed check: "+str(check))
+                        #print(series.get(check.get('Name')))
 
                     keep_series = keep_series and check_result
                     if not keep_series and args.verbose:
-                        print("Failed check: "+str(check))
-                        print(series.get(check.get('Name')))
+                        logger.info(series.get(check.get('Name')) + " Failed check: "+ str(check))
+                        #print("Failed check: "+str(check))
+                        #print(series.get(check.get('Name')))
 
             if args.verbose and not keep_series:
-                print("Series Failed check: "+str(series.get("SeriesNumber").get("Value")[0]))
+                logger.info("Series Failed check: "+str(series.get("SeriesNumber").get("Value")[0]))
             else:
-                print("Series Passed check: "+str(series.get("SeriesNumber").get("Value")[0]))
+                logger.info("Series Passed check: "+str(series.get("SeriesNumber").get("Value")[0]))
 
             if keep_series:
                 series_ids.append(series_uid)
 
         if len(series_ids)>0:
             out_series_map[study_uid]=series_ids              
-    logging.debug("Done checking series")
+    logger.debug("Done checking series")
 
     #print(out_series_map)
     if args.verbose:
-        print(str(len(out_series_map.values()))+" series passed Series-Level check")
-        print(out_series_map.values())
+        logger.info(str(len(out_series_map.values()))+" series passed Series-Level check")
+        logger.info(out_series_map.values())
 
     n_instances=0
     for study in tree.get('StudyList'):
@@ -391,15 +411,16 @@ def main():
             for instance in series['InstanceList']:
                 keep_instance=True
                 instance_uid = instance.get("SOPInstanceUID").get("Value")[0]
-                logging.debug(" SOPInstanceUID: "+instance_uid)
+                logger.debug(" SOPInstanceUID: "+instance_uid)
                 if 'Instance' in filter:
                     for check in filter['Instance']:
                         check_result = check_tag(instance, check)
                         keep_instance = keep_instance and check_result
                         if args.verbose:
                             if not check_result:
-                                print("Failed check: "+str(check))
-                                print(instance.get(check.get('Name')))
+                                logger.info(series.get(check.get('Name')) + " Failed check: "+ str(check))
+                                #print("Failed check: "+str(check))
+                                #print(instance.get(check.get('Name')))
 
                 if keep_instance:
                     instance_ids.append(instance_uid)
@@ -408,7 +429,7 @@ def main():
             if len(instance_ids) >= args.min_instances:
                 out_instance_map[series_uid]=instance_ids
 
-    logging.debug("Done checking instances")
+    logger.debug("Done checking instances")
     #print(str(n_instances)+" instances passed Instance-Level check")
 
     tree_studies=[]
@@ -452,9 +473,10 @@ def main():
     if len(tree_studies) > 0:
         out_tree['StudyList']=tree_studies
     else:
-        print("Empty output")
+        logger.info("Empty output")
 
     with open(args.output, 'w', encoding='utf-8') as f:
+        logger.info("Writing pruned tree to: "+args.output)
         json.dump(out_tree, f, ensure_ascii=False, indent=4)
 
     return(0)
