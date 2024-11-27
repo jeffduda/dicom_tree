@@ -120,12 +120,13 @@ for linkdir in ${linkdirs}; do
 
     # Change to "clean" filename for sidecar
     if [ -e "${odir}/${series_name}_series_tree.json" ]; then
-        python ${DICOMTREEPATH}/dicom_tree/dicom_tree_brief.py -t ${odir}/${series_name}_series_tree.json
+        #python ${DICOMTREEPATH}/dicom_tree/dicom_tree_brief.py -t ${odir}/${series_name}_series_tree.json
         mv ${odir}/${series_name}_series_tree.json ${odir}/${series_alias}/${series_alias}_series_tree.json
     fi
 
     # Convert dicom to nifti
-    ${DICOMTREEPATH}/scripts/dcm2niix_wrap.sh -i ${linkdir} -o ${odir}/${series_alias} -t ${tags} -f ${naming}
+    conv=`${DICOMTREEPATH}/scripts/dcm2niix_wrap.sh -i ${linkdir} -o ${odir}/${series_alias} -t ${tags} -f ${naming}`
+    logger "INFO" "conv"
 
 
     # Remove any directory with no image volumes
