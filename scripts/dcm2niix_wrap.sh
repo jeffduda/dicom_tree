@@ -9,6 +9,7 @@ logger () {
 
 load_mod () {
     x=$(module load $1)
+    echo "System: $x"
     for read -r line; do
         logger "INFO" "System: $line"
     done <<< "$x"
