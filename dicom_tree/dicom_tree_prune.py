@@ -125,13 +125,13 @@ def check_tag(struct, check, verbose=False):
     # Check for existence conditions
     if check.get('Operator')=='dne':
         result = tag is None
-        if verbose and not result:
-            print("Failed check for does not exist of tag: "+str(check.get('Name')))
+        #if verbose and not result:
+        #    print("Failed check for does not exist of tag: "+str(check.get('Name')))
         return(result)
     elif check.get('Operator')=='exists':
         result = tag is not None
-        if verbose and not result:
-            print("Failed check for existence of tag: "+str(check.get('Name'))) 
+        #if verbose and not result:
+        #    print("Failed check for existence of tag: "+str(check.get('Name'))) 
         return(result)
 
     # If tag does not exist, return false or default
@@ -153,8 +153,8 @@ def check_tag(struct, check, verbose=False):
     # Get value from a sequence
     if 'SeqKey' in check:
         if check.get('SeqKey') not in tag_val[0].keys():
-            if verbose:
-                print("Failed check for sequence key: "+str(check.get('SeqKey')))
+            #if verbose:
+            #    print("Failed check for sequence key: "+str(check.get('SeqKey')))
             return(False)
         tag_val = tag_val[0].get(check.get('SeqKey'))['Value']
 
@@ -181,8 +181,8 @@ def check_tag(struct, check, verbose=False):
 
 
     valid_value = check_value(tag_val, check, verbose)
-    if verbose and not valid_value:
-        print("Failed check for value: "+str(tag_val)+" of tag: "+str(check.get('Name')))
+    #if verbose and not valid_value:
+    #    print("Failed check for value: "+str(tag_val)+" of tag: "+str(check.get('Name')))
     return(valid_value)
 
 def check_value(value, check, verbose=False):
@@ -226,7 +226,7 @@ def check_value(value, check, verbose=False):
 
     return(valid)
 
-def contiguous_series(tree):
+def contiguous_series(tree, logger=None):
     for study in tree['StudyList']:
         for series in study["SeriesList"]:
             inst_list=[]
@@ -255,7 +255,9 @@ def contiguous_series(tree):
                             position_list.append(instance["SliceLocation"]["Value"][0])
 
                     if len(position_list) != len(inst_consecutive):
-                        print("WARNING: Instance/s are missing SliceLocation in series: "+str(series["SeriesNumber"]["Value"][0]))
+                        if logger is not None:
+                            logger.WARNING("Instance/s are missing SliceLocation in series: "+str(series["SeriesNumber"]["Value"][0]))
+                            #print("WARNING: Instance/s are missing SliceLocation in series: "+str(series["SeriesNumber"]["Value"][0]))
                         series["InstanceList"]=[]
                     else:
                 
