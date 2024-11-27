@@ -126,7 +126,9 @@ for linkdir in ${linkdirs}; do
 
     # Convert dicom to nifti
     conv=`${DICOMTREEPATH}/scripts/dcm2niix_wrap.sh -i ${linkdir} -o ${odir}/${series_alias} -t ${tags} -f ${naming}`
-    logger "INFO" "$conv"
+    while read -r linel do
+        logger "INFO" "$line"
+    done <<< "$conv"
 
 
     # Remove any directory with no image volumes
