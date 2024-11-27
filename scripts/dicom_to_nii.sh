@@ -1,5 +1,9 @@
 #!/bin/bash
 
+logger () {
+  d=$(date '+%Y-%m-%d %H:%M:%S')
+  echo "$d dicom_to_nii.sh $1 $2 - SLURM=${SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
+}
 
 usage() { echo "Usage: $0 -i input_dicom_dir -o output_dir  [-q queue_name]"; exit 1; } 
 
@@ -37,19 +41,19 @@ done
 
 
 if [ ! -e "${DICOMTREEPATH}/dicom_tree/dicom_tree.py" ]; then   
-    echo "DICOMTREEPATH is not set"
+    logger "ERROR" "DICOMTREEPATH is not set"
     exit 1
 fi
 
 
 # Does input directory exist
 if [ ! -d "${idir}" ]; then
-    echo "Input directory does not exist"
+    logger "INFO" "Input directory does not exist"
 fi
 
 # Create output directory if it does not exist
 if [ ! -d "${odir}" ]; then
-    echo "Create output directory: ${odir}"
+    logger "INFO" "Create output directory: ${odir}"
     mkdir -p ${odir}
 fi
 
@@ -79,7 +83,6 @@ fi
 # Prune tree based on filter
 pruned="${odir}/${alias}_pruned_tree.json"
 prune_cmd="python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -c -t ${odir}/${alias}_study_tree.json -m $min_instances -o ${pruned} ${filter_opt}"
-echo $prune_cmd
 $prune_cmd
 
 # Create symbolic links to dicom files to convert (org by series)
@@ -87,13 +90,13 @@ python ${DICOMTREEPATH}/dicom_tree/dicom_tree_link.py -t ${pruned} -s ${odir} -o
 
 # Print out basic info
 nstudies=$(python ${DICOMTREEPATH}/dicom_tree/dicom_tree_get.py -t ${odir}/${alias}_study_tree.json -n nstudies)
-echo "Number of studies: ${nstudies}"
+logger "INFO" "Number of studies: ${nstudies}"
 cpt=$(python ${DICOMTREEPATH}/dicom_tree/dicom_tree_get.py -t ${odir}/${alias}_study_tree.json  -l study -n ProcedureCodeSequence -s 00080100)
-echo "CPT: ${cpt}"
+logger "INFO" "CPT: ${cpt}"
 
 # If no images to convert, exit
 if [ ! -d "${odir}/dicom" ]; then
-    echo "No images to convert"
+    logger "INFO" "No images to convert"
     exit 0
 fi
 
@@ -102,7 +105,7 @@ linkdirs=$(find ${odir}/dicom/* -type d -name "*")
 count=0
 for linkdir in ${linkdirs}; do
     count=$((count+1))
-    echo "Processing: ${linkdir}"
+    logger "INFO" "Processing: ${linkdir}"
     series_name=$(basename ${linkdir})
 
     # Get rid of repeat underscores
@@ -129,7 +132,7 @@ for linkdir in ${linkdirs}; do
     series_imgs=$(find ${odir}/${series_alias} -type f -name "*.nii.gz")
     n_imgs=${series_imgs[@]}
     if [ "${series_imgs}" == "" ]; then
-        echo "Remove emtpy series directory ${series_alias}"
+        logger "INFO" "Remove emtpy series directory ${series_alias}"
         rm -Rf ${odir}/${series_alias}
     fi
 
@@ -144,10 +147,10 @@ for eqimg in ${eqimgs}; do
     img_base=$(echo $img_name | rev | cut -c6- | rev)
     dir_name=$(dirname $eqimg)
 
-    echo "Removing images with uneven slice spacing"
+    #logger "INFO" "Removing images with uneven slice spacing"
     
     if [ -e "${dir_name}/${img_base}.nii.gz" ]; then
-        echo "  - removing ${dir_name}/${img_base}.nii.gz"
+        logger "INFO" "Removing ${dir_name}/${img_base}.nii.gz"
         rm ${dir_name}/${img_base}.nii.gz
     fi 
     if [ -e "${dir_name}/${img_base}.json" ]; then
@@ -161,31 +164,31 @@ done
 if [ $duplicates -eq 0 ]; then
     aimgs=$(find ${odir}/*/* -type f -name "*a.nii.gz")
     for aimg in ${aimgs}; do
-        echo "Checking for duplicate: $aimg"
+        #logger "INFO" "Checking for duplicate: $aimg"
         img_name=$(basename $aimg .nii.gz)
         img_base=$(echo $img_name | rev | cut -c2- | rev)
         dir_name=$(dirname $aimg)
 
-        echo "  img_name=${img_name}"
-        echo "  img_base=${img_base}"
-        echo "  dir_name=${dir_name}"
+        #echo "  img_name=${img_name}"
+        #echo "  img_base=${img_base}"
+        #echo "  dir_name=${dir_name}"
 
         ajson="${dir_name}/${img_name}.json"
         orig_img="${dir_name}/${img_base}.nii.gz"
-        echo "Looking for: $orig_img"
+        #echo "Looking for: $orig_img"
 
         if [ -e "${orig_img}" ]; then
-            echo "Checking possible match: $orig_img"
+            #echo "Checking possible match: $orig_img"
             diff=$(diff $aimg $orig_img)
             if [ "$diff" == "" ]; then
-                echo "Removing duplicate image: ${aimg}"
+                logger "INFO" "Removing duplicate image: ${aimg}"
                 rm $aimg
                 if [ -e "$ajson" ]; then
                     rm $ajson
                 fi
             else
-                echo "Keeping possible duplicate: ${aimg}"
-                echo "diff: $diff"
+                logger "INFO" "Keeping possible duplicate: ${aimg}"
+                #echo "diff: $diff"
             fi 
         fi 
     done
@@ -193,16 +196,16 @@ fi
 
 # CT images should have a mean value < 0
 # Any images with mean intensity > 0, is likely not a CT
-echo "Check mean intensity values"
+#echo "Check mean intensity values"
 if [ $ct -eq 1 ]; then
     imgs=$(find ${odir}/*/* -type f -name "*.nii.gz")
     for img in ${imgs}; do
-        echo $img
+        #echo $img
         intensity=$(c3d $img -info-full | grep Mean | cut -d : -f2)
         intensity=$(printf '%.3f' $intensity)
-        echo "Mean intensity: $intensity"
+        #echo "Mean intensity: $intensity"
         if (( $(echo "$intensity > 0" | bc -l) )); then
-            echo "High mean intensity, unlikey to be CT: $img"
+            #echo "High mean intensity, unlikey to be CT: $img"
             img_name=$(basename $img .nii.gz)
             dir_name=$(dirname $img)
             rm $img
@@ -212,14 +215,14 @@ if [ $ct -eq 1 ]; then
 fi
 
 # Eliminate images with fewer slices than min_instances
-echo "Check number of slices"
+#echo "Check number of slices"
 imgs=$(find ${odir}/*/* -type f -name "*.nii.gz")
 for img in ${imgs}; do
-    echo $img
+    #echo $img
     nslices=$(c3d $img -info | cut -d ";" -f1 | cut -d "[" -f2 | cut -d "]" -f1 | cut -d "," -f3 | xargs)
-    echo "Number of Slices: $nslices"
+    logger "INFO" "Number of Slices: $nslices"
     if (( $(echo "$nslices < $min_instances" | bc -l) )); then
-        echo "To few slices: $img"
+        logger "INFO" "To few slices in image: $img"
         img_name=$(basename $img .nii.gz)
         dir_name=$(dirname $img)
         rm $img
@@ -229,7 +232,7 @@ done
 
 
 # Don't use a dir for each series
-echo "series level output: $series"
+#echo "series level output: $series"
 if [ $series -eq 0 ]; then
     for linkdir in ${linkdirs}; do
         count=$((count+1))

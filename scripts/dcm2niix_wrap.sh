@@ -2,6 +2,12 @@
 module load dcm2niix
 module load python/3.10
 
+logger () {
+  d=$(date '+%Y-%m-%d %H:%M:%S')
+  echo "$d dcm2niix_wrap.sh $1 $2 - SLURM=${SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
+}
+
+
 idir=""
 odir=""
 name=""
@@ -22,12 +28,12 @@ done
 
 # Does input directory exist
 if [ ! -d "${idir}" ]; then
-    echo "Input directory does not exist"
+    logger "ERROR" "Input directory does not exist"
 fi
 
 # Create output directory if it does not exist
 if [ ! -d "${odir}" ]; then
-    echo "Create output directory: ${odir}"
+    logger "INFO" "Create output directory: ${odir}"
     mkdir -p ${odir}
 fi
 
@@ -35,7 +41,6 @@ fi
 # -z y compress
 # -a y anonymize
 exe="dcm2niix -i y -z y -a y -o ${odir} -f "${fmt}" ${idir}"
-echo $exe
 $exe
 
 # remove things we don't want
@@ -45,15 +50,15 @@ for f in $eq_list; do
     dname=$(dirname $f)
     eq="${dname}/${base}.nii.gz"
     eqj="${dname}/${base}.json"
-    echo "Removing: ${f}"
+    logger "INFO" "Removing: ${f}"
 
     rm ${f}
     if [ -e "${eq}" ]; then
-        echo "Removing: ${eq}"
+        logger "INFO" "Removing: ${eq}"
         rm ${eq}
     fi
     if [ -e "${eqj}" ]; then
-        echo "Removing: ${eqj}"
+        logger "INFO" "Removing: ${eqj}"
         rm ${eqj}
     fi
 done
@@ -71,7 +76,7 @@ for n in afiles; do
     if [ -e "${orign}" ]; then
         diff=$(diff $n $orign)
         if [ "$diff" == "" ]; then
-            echo "Removing duplicate image: ${n}"
+            logger "INFO" "Removing duplicate image: ${n}"
             rm ${n}
         fi 
     fi 
@@ -84,7 +89,7 @@ for f in $file_list; do
     b=$(basename $f .nii.gz)
     clean=$(echo "${b/[\{\}\[\]\!\"\'.@#$%^&*()+:;<>?~]/_}")
     if [[ ! -e "${d}/${clean}.nii.gz" ]]; then
-        echo "Renaming $b as $clean"
+        logger "INFO" "Renaming $b as $clean"
         mv ${d}/${b}.nii.gz ${d}/${clean}.nii.gz
         mv ${d}/${b}.json ${d}/${clean}.json
     fi

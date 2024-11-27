@@ -302,7 +302,7 @@ def main():
     logger.addHandler(ch)
 
 
-    logger.info("Reading tree file: %s" % args.tree)
+    logger.info("Reading tree file: " + args.tree)
     tree_file = open(args.tree)
     tree = json.load(tree_file)
 
