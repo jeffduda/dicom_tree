@@ -292,10 +292,10 @@ def main():
             slurminfo = slurminfo+"_"+slurmtask
 
 
-    logging.basicConfig(
-        format='%(asctime)s %(name)s %(levelname)-8s %(message)s',
-        level=logging.INFO,
-        datefmt='%Y-%m-%d %H:%M:%S')
+    #logging.basicConfig(
+    #    format='%(asctime)s %(name)s %(levelname)-8s %(message)s',
+    #    level=logging.INFO,
+    #    datefmt='%Y-%m-%d %H:%M:%S')
     formatter = logging.Formatter(fmt=f'%(asctime)s %(name)s %(levelname)-8s %(message)s {slurminfo}', datefmt='%Y-%m-%d %H:%M:%S')
     logger = logging.getLogger("dicom_tree_prune")
     logger.setLevel(logging.INFO)
