@@ -305,6 +305,11 @@ def main():
 
 
     logger.info("Reading tree file: " + args.tree)
+
+    if not os.path.exists(args.tree):
+        logger.error("Tree file does not exist: "+args.tree)
+        return(1)
+    
     tree_file = open(args.tree)
     tree = json.load(tree_file)
 
@@ -312,6 +317,7 @@ def main():
         tree = contiguous_series(tree)
 
     if args.filter is None:
+        logger.warning("No filter file provided, output==input")
         with open(args.output, 'w', encoding='utf-8') as f:
             json.dump(tree, f, ensure_ascii=False, indent=4)
         return(0)

@@ -85,14 +85,16 @@ pruned="${odir}/${alias}_pruned_tree.json"
 prune_cmd="python ${DICOMTREEPATH}/dicom_tree/dicom_tree_prune.py -c -t ${odir}/${alias}_study_tree.json -m $min_instances -o ${pruned} ${filter_opt}"
 $prune_cmd
 
-# Create symbolic links to dicom files to convert (org by series)
-python ${DICOMTREEPATH}/dicom_tree/dicom_tree_link.py -t ${pruned} -s ${odir} -o ${odir}/dicom -a ${alias}
+if [ -e "${pruned}" ]; then        
+    # Create symbolic links to dicom files to convert (org by series)
+    python ${DICOMTREEPATH}/dicom_tree/dicom_tree_link.py -t ${pruned} -s ${odir} -o ${odir}/dicom -a ${alias}
 
-# Print out basic info
-nstudies=$(python ${DICOMTREEPATH}/dicom_tree/dicom_tree_get.py -t ${odir}/${alias}_study_tree.json -n nstudies)
-logger "INFO" "Number of studies: ${nstudies}"
-cpt=$(python ${DICOMTREEPATH}/dicom_tree/dicom_tree_get.py -t ${odir}/${alias}_study_tree.json  -l study -n ProcedureCodeSequence -s 00080100)
-logger "INFO" "CPT: ${cpt}"
+    # Print out basic info
+    nstudies=$(python ${DICOMTREEPATH}/dicom_tree/dicom_tree_get.py -t ${odir}/${alias}_study_tree.json -n nstudies)
+    logger "INFO" "Number of studies: ${nstudies}"
+    cpt=$(python ${DICOMTREEPATH}/dicom_tree/dicom_tree_get.py -t ${odir}/${alias}_study_tree.json  -l study -n ProcedureCodeSequence -s 00080100)
+    logger "INFO" "CPT: ${cpt}"
+fi
 
 # If no images to convert, exit
 if [ ! -d "${odir}/dicom" ]; then
