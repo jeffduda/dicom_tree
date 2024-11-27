@@ -586,7 +586,7 @@ def main():
         return(1)
 
     logger.info("Scanning directory: %s" % args.path)
-    dicomTree = DicomTree(args.path)
+    dicomTree = DicomTree(args.path, make_logger=False)
     dicomTree.comprehensive=args.comprehensive
     dicomTree.use_name=args.name
 
