@@ -1,12 +1,21 @@
 #!/bin/bash
-module load dcm2niix
-module load python/3.10
+#module load dcm2niix
+#module load python/3.10
 
 logger () {
   d=$(date '+%Y-%m-%d %H:%M:%S')
   echo "$d dcm2niix_wrap.sh $1 $2 - SLURM=${SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
 }
 
+load_mod () {
+    x=${module load $1}
+    for read -r line; do
+        logger "INFO" "System: $line"
+    done <<< "$x"
+}
+
+load_mod dcm2niix
+load_mod python/3.10
 
 idir=""
 odir=""
