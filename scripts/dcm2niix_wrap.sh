@@ -7,14 +7,14 @@ logger () {
   echo "$d dcm2niix_wrap.sh $1 $2 - SLURM=${SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
 }
 
-load_mod () {
-    echo "Loading $1"
-    x=$(module load $1)
-    echo "System: $x"
-    for read -r line; do
-        logger "INFO" "System: $line"
-    done <<< "$x"
-}
+#load_mod () {
+#    echo "Loading $1"
+#    x=$(module load $1)
+#    echo "System: $x"
+#    for read -r line; do
+#        logger "INFO" "System: $line"
+#    done <<< "$x"
+#}
 
 module load dcm2niix
 module load python/3.10
