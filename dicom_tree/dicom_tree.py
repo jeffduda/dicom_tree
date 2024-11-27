@@ -540,8 +540,6 @@ class DicomTree:
 
 def main():
 
-    logging.basicConfig(level=logging.INFO)
-
     my_parser = argparse.ArgumentParser(description='Extract DICOM Header Info')
     my_parser.add_argument('-p', '--path', type=str, help='the path to the directory', required=True)
     my_parser.add_argument('-a', '--accession', type=str, help='accession number', required=False)
@@ -553,18 +551,26 @@ def main():
     my_parser.add_argument('-c', '--comprehensive', help='include all non-private & non-pixel tags', default=False, required=False, action='store_true')    
     
     args = my_parser.parse_args()
-    print(args)
 
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s')
-    logger=logging.getLogger("dicom_tree")
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    if args.log is not None:
-        #print("  add logging file: "+args.log)
-        fh = logging.FileHandler(args.log, 'a')
-        fh.setFormatter(formatter)
-        logger.addHandler(fh)
+    slurminfo=''
+    slurmtask=os.environ.get('SLURM_ARRAY_TASK_ID')
+    slurmid=os.environ.get('SLURM_JOB_ID')
+    if slurmid is not None:
+        slurminfo="- SLURM="+slurmid
+        if slurmtask is not None:
+            slurminfo = slurminfo+"_"+slurmtask
 
+
+    logging.basicConfig(
+        format='%(asctime)s %(name)s %(levelname)-8s %(message)s',
+        level=logging.INFO,
+        datefmt='%Y-%m-%d %H:%M:%S')
+    formatter = logging.Formatter(fmt=f'%(asctime)s %(name)s %(levelname)-8s %(message)s {slurminfo}', datefmt='%Y-%m-%d %H:%M:%S')
+    logger = logging.getLogger("dicom_tree_prune")
+    logger.setLevel(logging.INFO)
     ch = logging.StreamHandler()
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
 
     start = datetime.now()
 
