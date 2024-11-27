@@ -51,7 +51,7 @@ def main():
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
-    logger.info("Linking tree file: %s" % args.tree)
+    logger.info("Linking tree file: " + args.tree)
     tree_file = open(args.tree)
     tree = json.load(tree_file)
 
