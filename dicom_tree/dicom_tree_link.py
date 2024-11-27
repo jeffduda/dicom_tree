@@ -21,7 +21,7 @@ def clean_string(in_str):
 
 def main():
 
-    logging.basicConfig(level=logging.DEBUG)
+    #logging.basicConfig(level=logging.DEBUG)
 
     my_parser = argparse.ArgumentParser(description='Check dicom tag names')
     my_parser.add_argument('-t', '--tree', type=str, help='json file of dicom studies to filter', required=True)
@@ -42,7 +42,7 @@ def main():
 
     logging.basicConfig(
         format='%(asctime)s %(name)s %(levelname)-8s %(message)s',
-        level=logging.DEBUG,
+        level=logging.INFO,
         datefmt='%Y-%m-%d %H:%M:%S')
     formatter = logging.Formatter(fmt=f'%(asctime)s %(name)s %(levelname)-8s %(message)s {slurminfo}', datefmt='%Y-%m-%d %H:%M:%S')
     logger = logging.getLogger("dicom_tree_link")

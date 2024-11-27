@@ -127,7 +127,7 @@ for linkdir in ${linkdirs}; do
     # Convert dicom to nifti
     conv=`${DICOMTREEPATH}/scripts/dcm2niix_wrap.sh -i ${linkdir} -o ${odir}/${series_alias} -t ${tags} -f ${naming}`
     while read -r linel do
-        logger "INFO" "$line"
+        logger "INFO" "dcm2niix $line"
     done <<< "$conv"
 
 
