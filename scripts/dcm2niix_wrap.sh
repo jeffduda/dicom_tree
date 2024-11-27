@@ -16,8 +16,8 @@ logger () {
 #    done <<< "$x"
 #}
 
-module -s load dcm2niix
-module -s load python/3.10
+module load dcm2niix 2> /dev/null
+module load python/3.10 2> /dev/null
 
 idir=""
 odir=""
