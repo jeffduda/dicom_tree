@@ -8,6 +8,7 @@ logger () {
 }
 
 load_mod () {
+    echo "Loading $1"
     x=$(module load $1)
     echo "System: $x"
     for read -r line; do
