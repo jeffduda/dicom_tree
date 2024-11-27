@@ -566,7 +566,7 @@ def main():
         level=logging.INFO,
         datefmt='%Y-%m-%d %H:%M:%S')
     formatter = logging.Formatter(fmt=f'%(asctime)s %(name)s %(levelname)-8s %(message)s {slurminfo}', datefmt='%Y-%m-%d %H:%M:%S')
-    logger = logging.getLogger("dicom_tree_prune")
+    logger = logging.getLogger("dicom_tree")
     logger.setLevel(logging.INFO)
     ch = logging.StreamHandler()
     ch.setFormatter(formatter)
@@ -614,7 +614,7 @@ def main():
     dicomTree.read_directory(args.recursive)
         
     finish = datetime.now()
-    logger.info("Finished in %s" % str(finish-start))
+    logger.info("Tree build time: %s" % str(finish-start))
 
     outTree = {"Directory": args.path, "StudyList": dicomTree.studies}
 
