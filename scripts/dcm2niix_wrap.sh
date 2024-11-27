@@ -16,8 +16,8 @@ load_mod () {
     done <<< "$x"
 }
 
-load_mod dcm2niix
-load_mod python/3.10
+module load dcm2niix
+module load python/3.10
 
 idir=""
 odir=""
