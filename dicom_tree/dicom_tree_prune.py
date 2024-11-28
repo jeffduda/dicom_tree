@@ -279,7 +279,7 @@ def main():
     my_parser.add_argument('-f', '--filter', type=str, help='json file of dicom tags to filter on', required=False, default=None)
     my_parser.add_argument('-m', '--min_instances', type=int, help='minimum number of instances', required=False, default=1)
     my_parser.add_argument('-o', '--output', type=str, help='filtered dicom tree', required=True)
-    my_parser.add_argument('-v', '--verbose', action='store_true', help='verbose output', required=False)
+    my_parser.add_argument('-v', '--verbose', action='store_true', help='verbose output', required=False, default=False)
     my_parser.add_argument('-c', '--contiguous', action='store_true', help='only keep contiguous instances', default=False, required=False)
     args = my_parser.parse_args()
 
@@ -341,11 +341,11 @@ def main():
                 keep_study=keep_study and check_tag(study, check)
                 if args.verbose:
                     if not keep_study:
-                        print("Study Failed check: "+str(check))
-                        print(study.get(check.get('Name')))
+                        logger.debug("Study Failed check: "+str(check))
+                        logger.debug(study.get(check.get('Name')))
                     else:
-                        print("Study Passed check: "+str(check))
-                        print(study.get(check.get('Name')))
+                        logger.debug("Study Passed check: "+str(check))
+                        logger.debug(study.get(check.get('Name')))
 
         if keep_study:
             out_studies.append(study_uid)

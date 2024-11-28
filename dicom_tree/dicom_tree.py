@@ -277,11 +277,11 @@ class DicomTree:
         return instance
 
     def create_series(self, dat, filename=None):
-        self.logger.info("DicomTree.create_series()")
+        self.logger.debug("DicomTree.create_series()")
         instance=None
 
         if self._series_code_key not in dat:
-            self.logger.info("Creating new series UID")
+            #self.logger.info("Creating new series UID")
             series_uid_dat = {"vr": "UI", "Value": pydicom.generate_uid()}
             series_uid_dat["Group"]=self._series_code["Group"]
             series_uid_dat["Element"]=self._series_code["Element"]
@@ -301,7 +301,7 @@ class DicomTree:
 
     def create_study(self, js, filename=None):
 
-        self.logger.info("DicomTree.create_study()")
+        self.logger.debug("DicomTree.create_study()")
  
         series = self.create_series(js, filename)
         study = self.get_entry( self._study_code, js[self._study_code_key] )
@@ -396,14 +396,14 @@ class DicomTree:
         # Create new study if it doesn't exist
         study = self.get_study(instance_study_uid)
         if study is None:
-            self.logger.info("Adding new study")
+            self.logger.debug("Adding new study")
             study = self.create_study(js, filename)
-            self.logger.info("Adding new series")
+            self.logger.debug("Adding new series")
             self.studies.append(study)
 
         series = self.get_series_from_study(study, instance_series_uid)
         if series is None:
-            self.logger.info("Adding new series")
+            self.logger.debug("Adding new series")
             series = self.create_series(js, filename)
             study['SeriesList'].append(series)
 
@@ -460,9 +460,9 @@ class DicomTree:
         if isinstance(value, pydicom.multival.MultiValue):
             #value="/".join(list(value))
             value = list(value)
-        elif isinstance(value, pydicom.Sequence):
-            print("sequence value")
-            print(value)
+        #elif isinstance(value, pydicom.Sequence):
+        #    print("sequence value")
+        #    print(value)
 
         return(value)
 
