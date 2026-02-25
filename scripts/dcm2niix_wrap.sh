@@ -51,7 +51,7 @@ fi
 # -i y ignore derived & localizers & 2D
 # -z y compress
 # -a y anonymize
-exe="dcm2niix -i y -z y -a y -o ${odir} -f "${fmt}" ${idir}"
+exe="dcm2niix -i n -z y -a y -o ${odir} -f "${fmt}" ${idir}"
 $exe
 
 # remove things we don't want
