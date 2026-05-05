@@ -509,6 +509,9 @@ class DicomTree:
 
         self.studies[study_idx]["SeriesList"].append(new_series)
 
+    def to_dict(self):
+        return {"Directory": self.directory, "StudyList": self.studies}
+
     def to_json(self, filename):
         outTree = {"Directory": self.directory, "StudyList": self.studies}
 
